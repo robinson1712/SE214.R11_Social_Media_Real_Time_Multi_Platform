@@ -1,0 +1,17 @@
+# Shared defaults served by config-server to every service that has
+# `spring.config.import: optional:configserver:...`. Values here are merged
+# UNDER each service's own bundled application.yml (local values win),
+# so this is a safe place for cross-cutting overrides (e.g. log levels)
+# without needing to rebuild/redeploy every service.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.socialapp: INFO

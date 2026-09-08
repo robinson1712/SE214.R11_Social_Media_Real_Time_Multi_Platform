@@ -1,0 +1,15 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# IDE
+.idea/
+.vscode/
+
+# Web build artifacts we don't need to track (rebuilt by Dockerfile)
+/web/flutter_bootstrap.js

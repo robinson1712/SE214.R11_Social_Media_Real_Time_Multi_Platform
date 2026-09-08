@@ -1,0 +1,366 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}"
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_AUTH_REPLENISH:1}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_AUTH_BURST:5}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: media-service
+          uri: lb://MEDIA-SERVICE
+          predicates:
+            - Path=/api/media/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: post-service
+          uri: lb://POST-SERVICE
+          predicates:
+            - Path=/api/posts/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: comment-service
+          uri: lb://COMMENT-SERVICE
+          predicates:
+            - Path=/api/comments/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: reaction-service
+          uri: lb://REACTION-SERVICE
+          predicates:
+            - Path=/api/reactions/**,/api/saved/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: story-service
+          uri: lb://STORY-SERVICE
+          predicates:
+            - Path=/api/stories/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: reels-service
+          uri: lb://REELS-SERVICE
+          predicates:
+            - Path=/api/reels/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: group-service
+          uri: lb://GROUP-SERVICE
+          predicates:
+            - Path=/api/groups/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: fanpage-service
+          uri: lb://FANPAGE-SERVICE
+          predicates:
+            - Path=/api/pages/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: dating-service
+          uri: lb://DATING-SERVICE
+          predicates:
+            - Path=/api/dating/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: chat-service-ws
+          uri: lb:ws://CHAT-SERVICE
+          predicates:
+            - Path=/ws/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_WS_REPLENISH:5}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_WS_BURST:10}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: notification-service-ws
+          uri: lb:ws://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/ws-notifications/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_WS_REPLENISH:5}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_WS_BURST:10}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: chat-service
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/api/chat/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: feed-service
+          uri: lb://FEED-SERVICE
+          predicates:
+            - Path=/api/feed/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: moderation-service
+          uri: lb://MODERATION-SERVICE
+          predicates:
+            - Path=/api/moderation/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+        - id: search-service
+          uri: lb://SEARCH-SERVICE
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
+
+        # ---------- Aggregated Swagger docs (one UI at /swagger-ui.html instead
+        # of 15 separate per-service ports) — each route proxies a single
+        # service's /v3/api-docs through the gateway; springdoc.swagger-ui.urls
+        # below lists them for the UI's service dropdown. No rate limiting
+        # (docs, not business traffic) and no auth (see PUBLIC_PATTERNS in
+        # JwtAuthenticationFilter).
+        - id: auth-service-docs
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/docs/auth-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/auth-service/v3/api-docs, /v3/api-docs
+        - id: user-service-docs
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/docs/user-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/user-service/v3/api-docs, /v3/api-docs
+        - id: media-service-docs
+          uri: lb://MEDIA-SERVICE
+          predicates:
+            - Path=/docs/media-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/media-service/v3/api-docs, /v3/api-docs
+        - id: post-service-docs
+          uri: lb://POST-SERVICE
+          predicates:
+            - Path=/docs/post-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/post-service/v3/api-docs, /v3/api-docs
+        - id: comment-service-docs
+          uri: lb://COMMENT-SERVICE
+          predicates:
+            - Path=/docs/comment-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/comment-service/v3/api-docs, /v3/api-docs
+        - id: reaction-service-docs
+          uri: lb://REACTION-SERVICE
+          predicates:
+            - Path=/docs/reaction-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/reaction-service/v3/api-docs, /v3/api-docs
+        - id: story-service-docs
+          uri: lb://STORY-SERVICE
+          predicates:
+            - Path=/docs/story-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/story-service/v3/api-docs, /v3/api-docs
+        - id: reels-service-docs
+          uri: lb://REELS-SERVICE
+          predicates:
+            - Path=/docs/reels-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/reels-service/v3/api-docs, /v3/api-docs
+        - id: group-service-docs
+          uri: lb://GROUP-SERVICE
+          predicates:
+            - Path=/docs/group-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/group-service/v3/api-docs, /v3/api-docs
+        - id: fanpage-service-docs
+          uri: lb://FANPAGE-SERVICE
+          predicates:
+            - Path=/docs/fanpage-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/fanpage-service/v3/api-docs, /v3/api-docs
+        - id: dating-service-docs
+          uri: lb://DATING-SERVICE
+          predicates:
+            - Path=/docs/dating-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/dating-service/v3/api-docs, /v3/api-docs
+        - id: chat-service-docs
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/docs/chat-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/chat-service/v3/api-docs, /v3/api-docs
+        - id: notification-service-docs
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/docs/notification-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/notification-service/v3/api-docs, /v3/api-docs
+        - id: feed-service-docs
+          uri: lb://FEED-SERVICE
+          predicates:
+            - Path=/docs/feed-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/feed-service/v3/api-docs, /v3/api-docs
+        - id: moderation-service-docs
+          uri: lb://MODERATION-SERVICE
+          predicates:
+            - Path=/docs/moderation-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/moderation-service/v3/api-docs, /v3/api-docs
+        - id: search-service-docs
+          uri: lb://SEARCH-SERVICE
+          predicates:
+            - Path=/docs/search-service/v3/api-docs
+          filters:
+            - RewritePath=/docs/search-service/v3/api-docs, /v3/api-docs
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: auth-service
+        url: /docs/auth-service/v3/api-docs
+      - name: user-service
+        url: /docs/user-service/v3/api-docs
+      - name: media-service
+        url: /docs/media-service/v3/api-docs
+      - name: post-service
+        url: /docs/post-service/v3/api-docs
+      - name: comment-service
+        url: /docs/comment-service/v3/api-docs
+      - name: reaction-service
+        url: /docs/reaction-service/v3/api-docs
+      - name: story-service
+        url: /docs/story-service/v3/api-docs
+      - name: reels-service
+        url: /docs/reels-service/v3/api-docs
+      - name: group-service
+        url: /docs/group-service/v3/api-docs
+      - name: fanpage-service
+        url: /docs/fanpage-service/v3/api-docs
+      - name: dating-service
+        url: /docs/dating-service/v3/api-docs
+      - name: chat-service
+        url: /docs/chat-service/v3/api-docs
+      - name: notification-service
+        url: /docs/notification-service/v3/api-docs
+      - name: feed-service
+        url: /docs/feed-service/v3/api-docs
+      - name: moderation-service
+        url: /docs/moderation-service/v3/api-docs
+      - name: search-service
+        url: /docs/search-service/v3/api-docs
+
+jwt:
+  secret: ${JWT_SECRET:change-this-social-app-jwt-secret-key-must-be-at-least-256-bits}
+  access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+management:
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,prometheus
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

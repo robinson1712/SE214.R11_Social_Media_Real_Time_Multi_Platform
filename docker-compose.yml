@@ -1,0 +1,414 @@
+name: social-media-backend
+
+x-app-env: &app-env
+  EUREKA_URI: http://eureka-server:8761/eureka/
+  CONFIG_SERVER_URI: http://config-server:8888
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  JWT_SECRET: change-this-social-app-jwt-secret-key-must-be-at-least-256-bits
+  ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+  ADMIN_EMAILS: admin@social.app
+  # The Flutter web client legitimately fires bursts of concurrent requests on
+  # a single page (per-post/comment author lookups, feed, notifications, chat
+  # conversations, presence/follow-status checks all firing together) that
+  # comfortably exceed the original 20/40 default sized for lighter traffic —
+  # raised to give normal page loads headroom instead of 429ing routine usage.
+  RATE_LIMIT_REPLENISH: 50
+  RATE_LIMIT_BURST: 100
+
+services:
+  # ---------- Infrastructure ----------
+  postgres:
+    image: postgres:16-alpine
+    container_name: sma-postgres
+    environment:
+      POSTGRES_USER: sma
+      POSTGRES_PASSWORD: sma
+      POSTGRES_DB: postgres
+      POSTGRES_MULTIPLE_DATABASES: auth_db,user_db,media_db,post_db,comment_db,reaction_db,group_db,fanpage_db,dating_db,moderation_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-multi-db.sh:/docker-entrypoint-initdb.d/init-multi-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sma"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongodb:
+    image: mongo:7
+    container_name: sma-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: sma-redis
+    ports:
+      - "6379:6379"
+
+  kafka:
+    # bitnami/kafka:3.7 was pulled from Docker Hub's free tier; use the
+    # official Apache image instead (also KRaft-mode, no Zookeeper needed).
+    image: apache/kafka:3.7.0
+    container_name: sma-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: 4L6g3nShT-eMCtK--X86sw
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  minio:
+    image: minio/minio:latest
+    container_name: sma-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  # ---------- Observability ----------
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: sma-zipkin
+    ports:
+      - "9411:9411"
+
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: sma-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sma-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - eureka-server
+
+  promtail:
+    image: grafana/promtail:3.1.0
+    container_name: sma-promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./docker/observability/promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sma-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./docker/observability/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./docker/observability/grafana-dashboards-provider.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./docker/observability/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - loki
+      - zipkin
+      - prometheus
+
+  # ---------- Spring Cloud infra ----------
+  eureka-server:
+    build: ./infra/eureka-server
+    container_name: sma-eureka-server
+    ports:
+      - "8761:8761"
+
+  config-server:
+    build: ./infra/config-server
+    container_name: sma-config-server
+    environment:
+      <<: *app-env
+      CONFIG_REPO_PATH: /config-repo
+    volumes:
+      - ./config-repo:/config-repo
+    ports:
+      - "8888:8888"
+    depends_on:
+      - eureka-server
+
+  api-gateway:
+    build: ./infra/api-gateway
+    container_name: sma-api-gateway
+    environment: *app-env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+      - config-server
+      - redis
+
+  # ---------- Business services ----------
+  auth-service:
+    build: ./services/auth-service
+    container_name: sma-auth-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+
+  user-service:
+    build: ./services/user-service
+    container_name: sma-user-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+
+  media-service:
+    build: ./services/media-service
+    container_name: sma-media-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+      - minio
+      - eureka-server
+
+  post-service:
+    build: ./services/post-service
+    container_name: sma-post-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+
+  comment-service:
+    build: ./services/comment-service
+    container_name: sma-comment-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8085:8085"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+
+  reaction-service:
+    build: ./services/reaction-service
+    container_name: sma-reaction-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8086:8086"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+
+  story-service:
+    build: ./services/story-service
+    container_name: sma-story-service
+    environment:
+      <<: *app-env
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+    ports:
+      - "8087:8087"
+    depends_on:
+      - mongodb
+      - kafka
+      - eureka-server
+
+  reels-service:
+    build: ./services/reels-service
+    container_name: sma-reels-service
+    environment:
+      <<: *app-env
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+    ports:
+      - "8088:8088"
+    depends_on:
+      - mongodb
+      - kafka
+      - eureka-server
+
+  group-service:
+    build: ./services/group-service
+    container_name: sma-group-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8089:8089"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+
+  fanpage-service:
+    build: ./services/fanpage-service
+    container_name: sma-fanpage-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8090:8090"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+
+  dating-service:
+    build: ./services/dating-service
+    container_name: sma-dating-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8091:8091"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+
+  chat-service:
+    build: ./services/chat-service
+    container_name: sma-chat-service
+    environment:
+      <<: *app-env
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+    ports:
+      - "8092:8092"
+    depends_on:
+      - mongodb
+      - redis
+      - kafka
+      - eureka-server
+
+  notification-service:
+    build: ./services/notification-service
+    container_name: sma-notification-service
+    environment:
+      <<: *app-env
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+    ports:
+      - "8093:8093"
+    depends_on:
+      - mongodb
+      - kafka
+      - eureka-server
+
+  feed-service:
+    build: ./services/feed-service
+    container_name: sma-feed-service
+    environment: *app-env
+    ports:
+      - "8094:8094"
+    depends_on:
+      - redis
+      - kafka
+      - eureka-server
+
+  moderation-service:
+    build: ./services/moderation-service
+    container_name: sma-moderation-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8095:8095"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+
+  search-service:
+    build: ./services/search-service
+    container_name: sma-search-service
+    environment: *app-env
+    ports:
+      - "8096:8096"
+    depends_on:
+      - eureka-server
+
+  # ---------- Frontend ----------
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        API_BASE_URL: http://localhost:8080
+    container_name: sma-frontend
+    ports:
+      - "3001:80"
+    depends_on:
+      - api-gateway
+
+volumes:
+  pg_data:
+  mongo_data:
+  kafka_data:
+  minio_data:
+  prometheus_data:

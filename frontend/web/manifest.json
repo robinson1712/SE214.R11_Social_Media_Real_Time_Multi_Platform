@@ -1,0 +1,12 @@
+{
+    "name": "TSON",
+    "short_name": "TSON",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0866FF",
+    "theme_color": "#0866FF",
+    "description": "TSON — social media web client",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": []
+}

@@ -1,0 +1,129 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel any in-progress run for the same branch/PR when a new commit lands.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & test (19 modules, 389 unit tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      # Builds all 19 modules and runs every unit test (the Testcontainers
+      # integration test in group-service is excluded from this by design —
+      # see maven-surefire-plugin config in services/group-service/pom.xml —
+      # it's run explicitly in the next step instead, on a runner that can
+      # actually reach Docker).
+      - name: mvn clean install (build + 389 unit tests)
+        run: mvn -B clean install
+
+      # GitHub-hosted ubuntu runners have a real Docker daemon, unlike the
+      # sandboxed dev environment this test was originally blocked in — this
+      # is exactly the "run it on a machine where Testcontainers can reach
+      # Docker" case called out in TODO.md.
+      - name: Run Testcontainers integration test (group-service)
+        run: mvn -B -pl services/group-service test -Dtest=GroupRepositoryIntegrationTest -DfailIfNoTests=false
+
+      - name: Upload surefire test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: "**/target/surefire-reports/*.txt"
+          retention-days: 14
+
+  docker-images:
+    name: Build (and push on main) Docker images
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      # Every service's Dockerfile just does `COPY target/*.jar app.jar` —
+      # the jar has to already exist before `docker build`, same as the local
+      # dev workflow documented in README.md.
+      - name: mvn clean package (skip tests — already verified in build-and-test)
+        run: mvn -B clean package -DskipTests
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Builds every service's image unconditionally (this is what catches a
+      # broken Dockerfile on a PR before it ever reaches main); only logs in
+      # and pushes to GHCR when this is a push to main.
+      - name: Build (and push) every service image
+        env:
+          SHOULD_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: |
+          set -e
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          SHA_TAG="${{ github.sha }}"
+
+          SERVICES="infra/eureka-server infra/config-server infra/api-gateway \
+            services/auth-service services/user-service services/media-service \
+            services/post-service services/comment-service services/reaction-service \
+            services/story-service services/reels-service services/group-service \
+            services/fanpage-service services/dating-service services/chat-service \
+            services/notification-service services/feed-service services/moderation-service \
+            services/search-service"
+
+          # GHCR occasionally answers a push with "unknown blob" when a layer
+          # shared with an already-pushed image (e.g. the common JRE base) is
+          # cross-repo blob-mounted before the registry has fully committed it
+          # — a known transient GHCR race, not a bad image. Retry a few times
+          # with backoff instead of failing the whole job on it.
+          push_with_retry() {
+            local ref="$1"
+            for attempt in 1 2 3; do
+              if docker push "$ref"; then
+                return 0
+              fi
+              echo "docker push $ref failed (attempt $attempt/3), retrying in 10s..."
+              sleep 10
+            done
+            echo "docker push $ref failed after 3 attempts"
+            return 1
+          }
+
+          for svc in $SERVICES; do
+            name=$(basename "$svc")
+            image="ghcr.io/${OWNER}/${REPO}-${name}"
+            echo "::group::Building ${image}"
+            docker build -t "${image}:latest" -t "${image}:${SHA_TAG}" "$svc"
+            echo "::endgroup::"
+
+            if [ "$SHOULD_PUSH" = "true" ]; then
+              push_with_retry "${image}:latest"
+              push_with_retry "${image}:${SHA_TAG}"
+            fi
+          done

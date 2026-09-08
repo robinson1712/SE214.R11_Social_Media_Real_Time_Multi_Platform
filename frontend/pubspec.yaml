@@ -1,0 +1,60 @@
+name: social_media_frontend
+description: Flutter web client (Facebook-style vertical layout) for the social media backend.
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Routing — URL-based, required for a real web app (back/forward/bookmark)
+  go_router: ^14.6.1
+
+  # HTTP client with interceptor support (auth header + 401 refresh-retry)
+  dio: ^5.7.0
+  http_parser: ^4.0.2
+
+  # Token storage — browser storage on web, keychain/keystore on mobile later
+  flutter_secure_storage: ^9.2.2
+
+  # Media
+  cached_network_image: ^3.4.1
+  image_picker: ^1.1.2
+  file_picker: ^8.1.4
+  record: ^5.2.0
+  audioplayers: ^6.1.0
+  emoji_picker_flutter: ^3.1.0
+  # Opening a chat video/file attachment in a new tab (cross-platform, so
+  # the same call keeps working once this app targets mobile too).
+  url_launcher: ^6.3.1
+
+  # Formatting (dates, relative time like "2h ago")
+  intl: ^0.19.0
+
+  # Real-time chat + notifications — STOMP over the Spring WebSocket endpoints
+  stomp_dart_client: ^2.1.2
+
+  # Reels video playback (works on web via the HTML5 video element)
+  video_player: ^2.9.2
+
+  # Multiple font choices for story text overlays
+  google_fonts: ^6.2.1
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

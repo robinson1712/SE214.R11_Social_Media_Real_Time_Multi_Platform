@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="TSON — social media web client">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="TSON">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>TSON</title>
+  <link rel="manifest" href="manifest.json">
+  <script>
+    // This app has no offline requirement, but flutter_bootstrap.js always
+    // registers a service worker regardless (Flutter's own
+    // --pwa-strategy=none build flag is deprecated and no longer actually
+    // suppresses it). That service worker caches main.dart.js/assets in the
+    // browser's own Cache Storage, independent of nginx's Cache-Control
+    // headers — once one is installed it keeps serving stale JS across
+    // deploys until it's replaced, which needs an extra reload (or a
+    // manual DevTools "unregister") beyond a normal hard refresh, and
+    // reads as "my change isn't showing up" even when the deploy worked.
+    // Unregistering on every load — before flutter_bootstrap.js runs — both
+    // cleans up any service worker a previous deploy left behind and stops
+    // this load's own registration from sticking around for the next one.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        for (const reg of regs) reg.unregister();
+      });
+    }
+  </script>
+</head>
+<body>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

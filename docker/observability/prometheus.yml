@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # eureka-server registers itself with `register-with-eureka: false` (it IS
+  # the registry, not a client of it), so it can never show up in the
+  # eureka_sd_configs job below — scrape it directly instead.
+  - job_name: eureka-server
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["eureka-server:8761"]
+        labels:
+          service: eureka-server
+
+  # Every other service (api-gateway, config-server, and all business
+  # services) registers itself with Eureka on startup — discover them
+  # dynamically from there instead of hardcoding a service list here. A
+  # hardcoded list is exactly what bit the CI pipeline when moderation-service
+  # was added and forgotten in .github/workflows/ci-cd.yml's SERVICES var;
+  # this scrape config can't go stale the same way.
+  - job_name: eureka-discovered-services
+    eureka_sd_configs:
+      - server: http://eureka-server:8761/eureka
+        refresh_interval: 30s
+    metrics_path: /actuator/prometheus
+    relabel_configs:
+      - source_labels: [__meta_eureka_app_name]
+        target_label: service
