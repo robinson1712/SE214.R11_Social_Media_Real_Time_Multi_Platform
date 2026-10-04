@@ -1,0 +1,1451 @@
+% !TEX program = xelatex
+% Đặc tả chi tiết hệ thống — Social Media Real-Time System (SE347)
+% Biên dịch bằng XeLaTeX (chạy 2 lần liên tiếp để mục lục hiển thị đúng):
+%     xelatex dac-ta-he-thong.tex
+%     xelatex dac-ta-he-thong.tex
+% Nếu máy có cài font "Times New Roman" (thường có sẵn trên Windows) và muốn
+% dùng đúng font này thay vì font thay thế bên dưới, đổi dòng \setmainfont.
+\documentclass[12pt,a4paper]{report}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{vietnamese}
+\setmainfont{TeX Gyre Termes} % thay bằng {Times New Roman} nếu máy có sẵn font này
+
+\usepackage[a4paper,left=3cm,right=2cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{url}
+\urlstyle{tt}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\hypersetup{
+    pdftitle={Đặc tả chi tiết hệ thống Social Media Real-Time System},
+    pdfauthor={Sinh viên thực hiện},
+    pdfsubject={Đồ án 1 - SE347},
+    bookmarksnumbered=true,
+    bookmarksopen=true
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\slshape\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyhead[L]{\slshape\leftmark}
+  \fancyhead[R]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+}
+
+% Bảng thực thể / API dùng chung một khuôn dạng longtable 3 cột.
+\newcommand{\entityTableHeader}[1]{%
+    \toprule
+    \textbf{Trường} & \textbf{Kiểu dữ liệu} & \textbf{Mô tả} \\
+    \midrule
+    \endfirsthead
+    \multicolumn{3}{l}{\small\itshape #1 (tiếp theo)} \\
+    \toprule
+    \textbf{Trường} & \textbf{Kiểu dữ liệu} & \textbf{Mô tả} \\
+    \midrule
+    \endhead
+    \bottomrule
+    \endfoot
+}
+
+\newcommand{\apiTableHeader}[1]{%
+    \toprule
+    \textbf{Method} & \textbf{Endpoint (qua Gateway)} & \textbf{Mô tả} \\
+    \midrule
+    \endfirsthead
+    \multicolumn{3}{l}{\small\itshape #1 (tiếp theo)} \\
+    \toprule
+    \textbf{Method} & \textbf{Endpoint (qua Gateway)} & \textbf{Mô tả} \\
+    \midrule
+    \endhead
+    \bottomrule
+    \endfoot
+}
+
+% Bảng 2 cột dùng chung (công nghệ, biến môi trường, cổng dịch vụ, ...)
+\newcommand{\twocolTableHeader}[3]{%
+    \toprule
+    \textbf{#2} & \textbf{#3} \\
+    \midrule
+    \endfirsthead
+    \multicolumn{2}{l}{\small\itshape #1 (tiếp theo)} \\
+    \toprule
+    \textbf{#2} & \textbf{#3} \\
+    \midrule
+    \endhead
+    \bottomrule
+    \endfoot
+}
+
+% Bảng 3 cột dùng chung với tiêu đề cột tuỳ biến (cổng/DB, biến môi trường...)
+\newcommand{\threecolTableHeader}[4]{%
+    \toprule
+    \textbf{#2} & \textbf{#3} & \textbf{#4} \\
+    \midrule
+    \endfirsthead
+    \multicolumn{3}{l}{\small\itshape #1 (tiếp theo)} \\
+    \toprule
+    \textbf{#2} & \textbf{#3} & \textbf{#4} \\
+    \midrule
+    \endhead
+    \bottomrule
+    \endfoot
+}
+
+% Bảng 4 cột dùng chung (dùng cho bảng định tuyến API Gateway)
+\newcommand{\fourcolTableHeader}[5]{%
+    \toprule
+    \textbf{#2} & \textbf{#3} & \textbf{#4} & \textbf{#5} \\
+    \midrule
+    \endfirsthead
+    \multicolumn{4}{l}{\small\itshape #1 (tiếp theo)} \\
+    \toprule
+    \textbf{#2} & \textbf{#3} & \textbf{#4} & \textbf{#5} \\
+    \midrule
+    \endhead
+    \bottomrule
+    \endfoot
+}
+
+\title{\Huge\textbf{Đặc tả chi tiết hệ thống}}
+\author{}
+\date{}
+
+\begin{document}
+
+% ============================================================
+% TRANG BÌA
+% ============================================================
+\begin{titlepage}
+\centering
+{\large ĐẠI HỌC QUỐC GIA TP. HỒ CHÍ MINH \par}
+{\large TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN \par}
+\vspace{0.3cm}
+{\large \textbf{KHOA CÔNG NGHỆ PHẦN MỀM} \par} % TODO: sửa lại đúng khoa/bộ môn nếu khác
+
+\vspace{2cm}
+\rule{0.8\textwidth}{0.4pt}\par
+\vspace{0.4cm}
+{\Huge\bfseries ĐẶC TẢ CHI TIẾT HỆ THỐNG\par}
+\vspace{0.4cm}
+{\LARGE\bfseries MẠNG XÃ HỘI THỜI GIAN THỰC\par}
+{\Large (Social Media Real-Time System)\par}
+\vspace{0.4cm}
+\rule{0.8\textwidth}{0.4pt}\par
+
+\vspace{1.2cm}
+{\large Kiến trúc Microservices trên nền Java Spring Boot / Spring Cloud\par}
+
+\vspace{2cm}
+{\large Học phần: \textbf{SE347} \par} % TODO: điền đúng tên học phần nếu khác
+{\large Đồ án 1 \par}
+
+\vspace{2cm}
+\begin{tabular}{ll}
+\textbf{Giảng viên hướng dẫn:} & \underline{\hspace{6cm}} \\[0.6cm]
+\textbf{Sinh viên thực hiện:} & \underline{\hspace{6cm}} \\[0.3cm]
+\textbf{MSSV:} & 22521253 \\[0.6cm]
+\textbf{Lớp:} & \underline{\hspace{6cm}} \\
+\end{tabular}
+
+\vfill
+{\large TP. Hồ Chí Minh, \the\year\par}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% ============================================================
+\chapter{Tổng quan đồ án}
+% ============================================================
+
+\section{Bối cảnh và mục tiêu}
+
+Đồ án xây dựng phần \textbf{backend} cho một mạng xã hội theo mô hình Facebook,
+bao gồm đầy đủ các nghiệp vụ cốt lõi: đăng bài (post), story, reels, bình luận,
+cảm xúc (reaction), kết bạn/theo dõi, nhóm (group), trang (fanpage), hẹn hò
+(dating) và nhắn tin thời gian thực (real-time chat). Hệ thống được thiết kế
+theo kiến trúc \textbf{microservices}, mỗi nghiệp vụ là một service độc lập,
+giao tiếp với nhau qua REST (đồng bộ) và Apache Kafka (bất đồng bộ), có thể
+triển khai và mở rộng độc lập.
+
+Mục tiêu chính của đồ án:
+\begin{itemize}[nosep]
+    \item Thiết kế và hiện thực một hệ backend nhiều service theo đúng các
+    nguyên lý microservices: service discovery, cấu hình tập trung, API
+    gateway, giao tiếp bất đồng bộ, chịu lỗi (resilience), quan sát hệ thống
+    (observability).
+    \item Áp dụng xác thực/phân quyền tập trung bằng JWT tại API Gateway.
+    \item Xây dựng một giao diện web (Flutter Web) sử dụng trực tiếp các API
+    thật để minh chứng luồng nghiệp vụ đầu-cuối.
+    \item Thiết lập observability đầy đủ (distributed tracing, log tập trung,
+    metrics) và pipeline CI/CD tự động.
+\end{itemize}
+
+\section{Phạm vi chức năng}
+
+Hệ thống gồm \textbf{20 module Maven} (1 thư viện dùng chung, 3 hạ tầng
+Spring Cloud, 16 business service nghiệp vụ) cùng một frontend Flutter Web độc
+lập. Danh sách chức năng nghiệp vụ chính:
+
+\begin{itemize}[nosep]
+    \item Đăng ký/đăng nhập, quản lý phiên (access token + refresh token).
+    \item Hồ sơ người dùng, kết bạn, theo dõi (follow), chặn (block), gợi ý kết bạn.
+    \item Upload/lưu trữ media (ảnh, video) qua đối tượng lưu trữ tương thích S3.
+    \item Đăng bài viết (kèm chia sẻ/repost, gắn thẻ người dùng, quyền riêng tư tuỳ biến).
+    \item Bình luận (kèm trả lời lồng nhau), cảm xúc (reaction), lưu bài viết (save).
+    \item Story (tự xoá sau 24 giờ), Reels (video ngắn).
+    \item Nhóm (group) công khai/riêng tư, trang (fanpage).
+    \item Hẹn hò (dating): vuốt (swipe), ghép đôi (match) theo thuật toán chấm điểm.
+    \item Nhắn tin thời gian thực (WebSocket/STOMP), trạng thái online (presence).
+    \item Thông báo thời gian thực (WebSocket/STOMP).
+    \item Bảng tin (feed) được xếp hạng theo mức độ tương tác.
+    \item Kiểm duyệt nội dung (lọc từ ngữ thô tục, hàng đợi báo cáo vi phạm cho quản trị viên).
+    \item Tìm kiếm tổng hợp trên nhiều loại đối tượng (người dùng/nhóm/trang/bài viết).
+\end{itemize}
+
+\section{Công nghệ sử dụng}
+
+\begin{longtable}{p{4.2cm}p{10.8cm}}
+\twocolTableHeader{Bảng công nghệ sử dụng}{Nhóm}{Công nghệ / thư viện}
+Ngôn ngữ \& nền tảng & Java 17, Maven đa module (reactor 20 module) \\
+Framework ứng dụng & Spring Boot 3.3.4 \\
+Điều phối microservice & Spring Cloud 2023.0.3 (Netflix Eureka, Spring Cloud Gateway, OpenFeign) \\
+Web layer & Spring Web MVC (16 business service) + Spring WebFlux (api-gateway, do Spring Cloud Gateway yêu cầu reactive) \\
+Truy xuất dữ liệu & Spring Data JPA (PostgreSQL), Spring Data MongoDB, Spring Data Redis \\
+Giao tiếp bất đồng bộ & Spring Kafka (Apache Kafka, chế độ KRaft — không cần Zookeeper) \\
+Real-time & Spring WebSocket (giao thức STOMP qua SockJS/raw WebSocket) \\
+Bảo mật & JWT (thư viện jjwt 0.12.6) — phát hành tại auth-service, xác thực tập trung tại api-gateway \\
+Chịu lỗi & Resilience4j (circuit breaker cho các Feign client liên service) \\
+Lưu trữ đối tượng & MinIO (tương thích S3) cho media-service \\
+Tài liệu API & springdoc-openapi (OpenAPI 3 / Swagger UI, gộp qua gateway) \\
+Kiểm thử & JUnit 5, Mockito, Testcontainers (integration test với DB/Kafka thật) \\
+Đóng gói \& triển khai & Docker, Docker Compose (30 container: hạ tầng + service + frontend) \\
+CI/CD & GitHub Actions — build/test toàn reactor, build \& push image lên GHCR \\
+Observability & Zipkin (tracing), Loki + Promtail + Grafana (log tập trung), Prometheus (metrics) \\
+Frontend & Flutter Web (biên dịch tĩnh, phục vụ qua Nginx trong container) \\
+\end{longtable}
+
+% ============================================================
+\chapter{Kiến trúc hệ thống}
+% ============================================================
+
+\section{Kiến trúc tổng quan}
+
+Hệ thống theo mô hình microservices cổ điển: mọi request từ client (web/mobile)
+đều đi qua một \textbf{API Gateway} duy nhất, gateway xác thực JWT rồi định
+tuyến (route) tới đúng business service thông qua \textbf{service discovery}
+(Eureka). Các service không gọi thẳng vào nhau qua địa chỉ IP/port cố định mà
+tra cứu lẫn nhau qua tên logic đã đăng ký trên Eureka (load-balanced qua
+Spring Cloud LoadBalancer, giao thức \path{lb://TEN-SERVICE}).
+
+\begin{longtable}{p{4cm}p{11cm}}
+\twocolTableHeader{Sơ đồ các lớp kiến trúc}{Lớp}{Thành phần \& vai trò}
+Client & Web (Flutter Web, cổng 3001) — gọi thẳng API Gateway; kiến trúc REST
++ WebSocket cho phép mở rộng thêm client mobile sau này mà không đổi backend. \\
+API Gateway & Cổng 8080 — Spring Cloud Gateway (WebFlux). Xác thực JWT, giới
+hạn tần suất (rate limiting), định tuyến theo path, gộp Swagger UI của 16
+service vào một điểm truy cập duy nhất. \\
+Service Discovery & Eureka Server, cổng 8761 — mọi service (kể cả gateway)
+đăng ký và tra cứu lẫn nhau tại đây; Prometheus cũng dùng Eureka để tự phát
+hiện target cần scrape metrics. \\
+Config Server & Cổng 8888 — cấp cấu hình dùng chung (profile \path{native},
+đọc từ thư mục \path{config-repo}) cho mọi service có khai báo
+\path{spring.config.import}. \\
+Business services & 16 service nghiệp vụ độc lập (xem Chương~\ref{ch:services}), mỗi service
+một cơ sở dữ liệu riêng (\emph{database-per-service}), giao tiếp ngang hàng
+qua OpenFeign (đồng bộ) hoặc Kafka (bất đồng bộ). \\
+Message broker & Apache Kafka (chế độ KRaft, không cần Zookeeper) — kênh giao
+tiếp bất đồng bộ giữa các service (xem mục~\ref{sec:kafka}). \\
+Lưu trữ dữ liệu & PostgreSQL (10 database riêng biệt), MongoDB (4 database),
+Redis (feed fanout, presence, rate limiter), MinIO (media nhị phân). \\
+Observability & Zipkin, Prometheus, Loki + Promtail + Grafana (xem
+Chương~\ref{ch:observability}). \\
+\end{longtable}
+
+\section{API Gateway}
+
+API Gateway (module \path{infra/api-gateway}, cổng 8080) là điểm vào duy nhất
+của toàn hệ thống, xây dựng trên Spring Cloud Gateway (nền WebFlux — reactive,
+khác với các business service dùng Spring MVC truyền thống). Gateway đảm nhận
+ba trách nhiệm chính:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Xác thực JWT tập trung} — mọi service nghiệp vụ phía sau
+    không cần tự giải mã/validate JWT, chỉ cần đọc header \path{X-User-Id} /
+    \path{X-User-Roles} do gateway gắn sẵn (xem Chương~\ref{ch:security}).
+    \item \textbf{Định tuyến (routing)} theo tiền tố đường dẫn, ánh xạ 1--1
+    sang tên service đã đăng ký trên Eureka.
+    \item \textbf{Giới hạn tần suất (rate limiting)} theo từng route bằng
+    thuật toán token bucket lưu trạng thái trên Redis
+    (\path{RequestRateLimiter} filter).
+\end{enumerate}
+
+Bảng định tuyến đầy đủ (trích từ \path{application.yml} của api-gateway):
+
+\begin{longtable}{p{3.2cm}p{4cm}p{2.3cm}p{4.5cm}}
+\fourcolTableHeader{Bảng định tuyến API Gateway}{Route}{Predicate (path)}{Rate limit mặc định}{Ghi chú}
+auth-service & \path{/api/auth/**} & 1 req/s, burst 5 & Giới hạn chặt hơn hẳn để chống brute-force đăng nhập/đăng ký. \\
+user-service & \path{/api/users/**} & 20 req/s, burst 40 & \\
+media-service & \path{/api/media/**} & 20 req/s, burst 40 & \\
+post-service & \path{/api/posts/**} & 20 req/s, burst 40 & \\
+comment-service & \path{/api/comments/**} & 20 req/s, burst 40 & \\
+reaction-service & \path{/api/reactions/**}, \path{/api/saved/**} & 20 req/s, burst 40 & \\
+story-service & \path{/api/stories/**} & 20 req/s, burst 40 & \\
+reels-service & \path{/api/reels/**} & 20 req/s, burst 40 & \\
+group-service & \path{/api/groups/**} & 20 req/s, burst 40 & \\
+fanpage-service & \path{/api/pages/**} & 20 req/s, burst 40 & \\
+dating-service & \path{/api/dating/**} & 20 req/s, burst 40 & \\
+chat-service & \path{/api/chat/**} & 20 req/s, burst 40 & \\
+chat-service (WS) & \path{/ws/**} & 5 req/s, burst 10 & Route riêng, \path{uri: lb:ws://CHAT-SERVICE}. \\
+notification-service & \path{/api/notifications/**} & 20 req/s, burst 40 & \\
+notification-service (WS) & \path{/ws-notifications/**} & 5 req/s, burst 10 & Route riêng cho WebSocket. \\
+feed-service & \path{/api/feed/**} & 20 req/s, burst 40 & \\
+moderation-service & \path{/api/moderation/**} & 20 req/s, burst 40 & \\
+search-service & \path{/api/search/**} & 20 req/s, burst 40 & \\
+\end{longtable}
+
+Ghi chú: mọi giá trị rate limit đều cấu hình được qua biến môi trường
+(\path{RATE_LIMIT_REPLENISH}, \path{RATE_LIMIT_BURST}, ...), không hard-code
+trong image — xem Phụ lục~\ref{ap:env}. Ngoài các route nghiệp vụ trên, gateway
+còn có 15 route phụ dạng \path{/docs/<service>/v3/api-docs} (không giới hạn
+tần suất, không yêu cầu xác thực) để gộp tài liệu OpenAPI của từng service vào
+một Swagger UI chung tại \path{/swagger-ui.html}.
+
+\section{Service Discovery (Eureka)}
+
+Mọi service (trừ Eureka Server chính nó) khai báo \path{eureka.client.
+service-url.defaultZone} trỏ về Eureka Server (cổng 8761) và tự đăng ký khi
+khởi động, gỡ đăng ký khi tắt (heartbeat định kỳ). Gateway và các Feign client
+tra cứu instance khả dụng qua tên logic (ví dụ \path{lb://POST-SERVICE}) thay
+vì địa chỉ cố định — cho phép chạy nhiều instance của cùng một service để cân
+bằng tải mà không cần đổi cấu hình phía gọi.
+
+\section{Config Server}
+
+Config Server (module \path{infra/config-server}, cổng 8888) chạy ở profile
+\path{native}, đọc cấu hình dùng chung từ thư mục \path{config-repo/
+application.yml} (mount vào container qua volume) thay vì cần một Git
+repository riêng. Các giá trị ở đây (mức log, danh sách actuator endpoint công
+khai...) được merge \emph{dưới} cấu hình cục bộ của từng service — cho phép
+đổi các cấu hình xuyên suốt hệ thống (ví dụ hạ mức log) mà không cần build lại
+image, chỉ cần sửa file và khởi động lại service tương ứng.
+
+\section{Giao tiếp giữa các service}
+
+\subsection{Giao tiếp đồng bộ — OpenFeign}
+
+Khi một service cần dữ liệu "tươi" ngay lập tức từ service khác (ví dụ
+post-service cần kiểm tra quan hệ bạn bè khi enforce quyền riêng tư
+\path{FRIENDS}), nó dùng \textbf{OpenFeign} — client REST khai báo bằng
+interface, tự động tra cứu địa chỉ qua Eureka. Các Feign client quan trọng:
+comment-service/story-service/feed-service/search-service gọi sang
+post-service, user-service, group-service, fanpage-service.
+
+Mỗi \path{@FeignClient} có kèm \textbf{Resilience4j circuit breaker} với
+\path{fallbackFactory} riêng — phân biệt rõ hai loại lỗi: lỗi nghiệp vụ (ví dụ
+404 không tìm thấy tài nguyên — vẫn trả lỗi đúng ngữ nghĩa cho client) và lỗi
+hạ tầng (service đích sập/timeout — trả về \path{ServiceUnavailableException}
+kèm mã 503 hoặc giá trị rỗng an toàn tuỳ ngữ cảnh, tránh một service sập kéo
+sập cả chuỗi). Trạng thái circuit breaker có thể theo dõi qua
+\path{actuator/circuitbreakers} của từng service.
+
+\subsection{Giao tiếp bất đồng bộ — Apache Kafka}
+\label{sec:kafka}
+
+Các sự kiện không cần phản hồi ngay (fan-out thông báo, đồng bộ bộ đếm,
+cascade xoá dữ liệu...) được phát qua Kafka, giúp service phát sự kiện không
+phải chờ (và không phụ thuộc trực tiếp vào) mọi service tiêu thụ. Bảng dưới
+liệt kê toàn bộ topic đã xác định trong mã nguồn (\path{KafkaTopics}):
+
+\begin{longtable}{p{3.2cm}p{3.5cm}p{7.3cm}}
+\threecolTableHeader{Bảng sự kiện Kafka}{Topic}{Producer}{Consumer(s) \& mục đích}
+\path{USER_REGISTERED} & auth-service & user-service (\path{UserRegisteredListener}) — tự tạo hồ sơ (\path{UserProfile}) rỗng ngay sau khi tài khoản được tạo. \\
+\path{POST_CREATED} & post-service & feed-service (\path{PostCreatedConsumer}) — fan-out bài viết mới vào Redis feed của bạn bè/người theo dõi. \\
+\path{POST_TAGGED} & post-service & notification-service — tạo thông báo \path{TAG} cho người được gắn thẻ. \\
+\path{COMMENT_CREATED} & comment-service & notification-service (thông báo cho chủ bài viết); reels-service (\path{ReelEventListener}, đồng bộ \path{commentCount} nếu đối tượng là reel). \\
+\path{REACTION} & reaction-service & notification-service (thông báo); reels-service (đồng bộ \path{reactionCount}). \\
+\path{GROUP} & group-service & notification-service — thông báo mời/duyệt thành viên nhóm. \\
+\path{PAGE} & fanpage-service & (dự trữ cho mở rộng thông báo liên quan trang). \\
+\path{FRIEND_REQUEST} & user-service (\path{FriendshipService}) & notification-service — thông báo lời mời kết bạn/chấp nhận. \\
+\path{FOLLOW} & user-service (\path{FollowService}) & notification-service — thông báo có người theo dõi mới. \\
+\path{MATCH} & dating-service & notification-service (thông báo ghép đôi thành công); chat-service (\path{MatchEventListener}) — tự tạo cuộc trò chuyện giữa hai người vừa match. \\
+\path{MESSAGE} & chat-service & notification-service — thông báo tin nhắn mới (khi người nhận offline). \\
+\path{REEL_CREATED} & reels-service & (dự trữ cho mở rộng, ví dụ fan-out feed reels). \\
+\path{STORY_CREATED} & story-service & (dự trữ cho mở rộng). \\
+\path{CONTENT_REMOVED} & moderation-service & comment-service, group-service, fanpage-service, reels-service, story-service — xoá cascade nội dung/dữ liệu liên quan khi quản trị viên duyệt gỡ vi phạm. \\
+\end{longtable}
+
+\section{Lưu trữ dữ liệu — Database per Service}
+
+Mỗi service nghiệp vụ sở hữu cơ sở dữ liệu riêng, không service nào truy cập
+trực tiếp database của service khác (đúng nguyên lý \emph{database-per-service}
+của microservices) — mọi truy cập chéo đều phải qua API (Feign) hoặc sự kiện
+(Kafka).
+
+\begin{longtable}{p{3.5cm}p{3cm}p{8cm}}
+\threecolTableHeader{Bảng cơ sở dữ liệu theo service}{Service}{Loại DB}{Tên DB / namespace}
+auth-service & PostgreSQL & \path{auth_db} \\
+user-service & PostgreSQL & \path{user_db} \\
+media-service & PostgreSQL + MinIO & \path{media_db} (metadata) + bucket đối tượng nhị phân \\
+post-service & PostgreSQL & \path{post_db} \\
+comment-service & PostgreSQL & \path{comment_db} \\
+reaction-service & PostgreSQL & \path{reaction_db} \\
+group-service & PostgreSQL & \path{group_db} \\
+fanpage-service & PostgreSQL & \path{fanpage_db} \\
+dating-service & PostgreSQL & \path{dating_db} \\
+moderation-service & PostgreSQL & \path{moderation_db} \\
+story-service & MongoDB & \path{story_db} \\
+reels-service & MongoDB & \path{reels_db} \\
+chat-service & MongoDB + Redis & \path{chat_db} (hội thoại/tin nhắn) + Redis (trạng thái online) \\
+notification-service & MongoDB & \path{notification_db} (TTL 8 tuần) \\
+feed-service & Redis & Sorted set theo từng user (không có schema quan hệ) \\
+search-service & Không có & Tổng hợp qua Feign, không lưu trữ dữ liệu riêng \\
+\end{longtable}
+
+10 database PostgreSQL được khởi tạo tự động trong cùng một instance
+PostgreSQL (container \path{sma-postgres}) thông qua script
+\path{docker/postgres/init-multi-db.sh} chạy lúc container khởi động lần đầu
+(biến môi trường \path{POSTGRES_MULTIPLE_DATABASES}).
+
+% ============================================================
+\chapter{Xác thực và bảo mật}
+\label{ch:security}
+% ============================================================
+
+\section{Luồng đăng ký / đăng nhập}
+
+\path{auth-service} (cổng 8081, database \path{auth_db}) là nơi duy nhất phát
+hành JWT trong toàn hệ thống:
+
+\begin{enumerate}[nosep]
+    \item \path{POST /api/auth/register} — tạo \path{Account} mới (mật khẩu
+    băm bằng BCrypt), mặc định role \path{USER}; nếu email nằm trong danh sách
+    \path{ADMIN_EMAILS} (biến môi trường, phân tách bằng dấu phẩy) thì tự động
+    gán thêm role \path{ADMIN}. Sau khi tạo thành công, phát sự kiện Kafka
+    \path{USER_REGISTERED} để user-service tự tạo hồ sơ tương ứng.
+    \item \path{POST /api/auth/login} — xác thực email/mật khẩu, phát hành cặp
+    \emph{access token} (JWT, hạn 15 phút — \path{JWT_ACCESS_EXPIRATION_MS}
+    mặc định \path{900000}) và \emph{refresh token} (JWT, hạn 7 ngày —
+    \path{JWT_REFRESH_EXPIRATION_MS} mặc định \path{604800000}, lưu vào bảng
+    \path{RefreshToken} để có thể thu hồi).
+    \item \path{POST /api/auth/refresh} — đổi refresh token còn hạn lấy access
+    token mới mà không cần đăng nhập lại.
+    \item \path{POST /api/auth/logout} — thu hồi refresh token hiện tại.
+    \item \path{GET /api/auth/me} — trả thông tin tài khoản đang đăng nhập
+    (dựa trên header \path{X-User-Id} gateway đã gắn).
+\end{enumerate}
+
+\section{Xác thực tập trung tại API Gateway}
+
+Toàn bộ việc kiểm tra JWT được tập trung ở một \path{GlobalFilter} duy nhất
+của gateway — \path{JwtAuthenticationFilter} — thay vì lặp lại logic này ở
+từng service:
+
+\begin{enumerate}[nosep]
+    \item Nếu đường dẫn request khớp một trong các mẫu công khai
+    (\path{PUBLIC_PATTERNS}: \path{/api/auth/register}, \path{/api/auth/login},
+    \path{/api/auth/refresh}, \path{/actuator/**}, \path{/eureka/**},
+    \path{/swagger-ui.html}, \path{/swagger-ui/**}, \path{/webjars/**},
+    \path{/v3/api-docs/**}, \path{/docs/**}) — cho qua thẳng, không cần token.
+    \item Ngược lại, trích token từ header \path{Authorization: Bearer <token>};
+    nếu không có, thử lấy từ query param \path{?token=} — dành riêng cho
+    WebSocket client (trình duyệt không phải lúc nào cũng gắn được custom
+    header vào request nâng cấp giao thức WebSocket).
+    \item Token không hợp lệ/hết hạn → trả về ngay \path{401 Unauthorized}
+    (JSON \path{ApiResponse.error(...)}), không forward xuống service phía sau.
+    \item Token hợp lệ → giải mã lấy \path{userId} và danh sách \path{roles},
+    gắn vào request dưới dạng header \path{X-User-Id} và \path{X-User-Roles}
+    (phân tách bằng dấu phẩy) rồi mới forward xuống business service. Từ đây,
+    \textbf{business service không bao giờ tự parse JWT} — chỉ đọc hai header
+    này để biết danh tính người gọi.
+\end{enumerate}
+
+\section{Phân quyền theo vai trò (Role-based access)}
+
+Hệ thống có hai vai trò: \path{USER} (mặc định) và \path{ADMIN}. Vai trò
+\path{ADMIN} chỉ được cấp tự động cho các email nằm trong allowlist
+\path{ADMIN_EMAILS} lúc đăng ký (không có API tự nâng quyền). Vai trò này được
+dùng để gate các API quản trị nội dung tại \path{moderation-service}
+(\path{GET /api/moderation/reports}, \path{PUT /api/moderation/reports/\{id\}/resolve})
+và trang quản trị trên frontend.
+
+\section{Giới hạn tần suất (Rate limiting)}
+
+Ngoài xác thực, gateway còn áp \path{RequestRateLimiter} (thuật toán token
+bucket, trạng thái lưu trên Redis) cho từng route — xem bảng định tuyến ở
+mục~2.2. Khoá giới hạn (\path{key-resolver}) là \path{userOrIpKeyResolver}:
+ưu tiên định danh theo \path{userId} (đã xác thực) để tránh một người dùng
+dùng nhiều IP né giới hạn, và rơi về IP nguồn khi request chưa xác thực (ví dụ
+chính các endpoint đăng ký/đăng nhập). Route \path{/api/auth/**} bị giới hạn
+chặt hơn hẳn các route khác (1 req/s, burst 5) để giảm rủi ro brute-force mật
+khẩu; hai route WebSocket cũng bị giới hạn số lần \emph{thiết lập kết nối}
+(5 req/s, burst 10) để tránh mở tràn lan connection.
+
+% ============================================================
+\chapter{Đặc tả chi tiết các microservice nghiệp vụ}
+\label{ch:services}
+% ============================================================
+
+Chương này đặc tả từng business service: mục đích, mô hình dữ liệu (thực thể
+và các trường chính) và danh sách API tiêu biểu (đường dẫn luôn được viết theo
+dạng đã đi qua API Gateway, ví dụ \path{/api/posts/...}, vì đây là cách duy
+nhất client bên ngoài được phép gọi vào hệ thống).
+
+\section{auth-service (cổng 8081)}
+
+\textbf{Mục đích:} phát hành và quản lý vòng đời JWT (đăng ký, đăng nhập, làm
+mới, đăng xuất) — luồng chi tiết đã trình bày ở Chương~\ref{ch:security}.
+
+\subsubsection*{Cơ sở dữ liệu (\path{auth_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{Account}
+\multicolumn{3}{l}{\textbf{Account} (bảng \path{accounts})} \\
+\path{id} & \path{String (UUID)} & Khoá chính. \\
+\path{email} & \path{String} & Duy nhất, dùng để đăng nhập. \\
+\path{passwordHash} & \path{String} & Mật khẩu đã băm (BCrypt). \\
+\path{phone} & \path{String} & Không bắt buộc. \\
+\path{status} & \path{Enum} & \path{ACTIVE} mặc định. \\
+\path{roles} & \path{List<String>} & Bảng phụ \path{account_roles}; mặc định \path{["USER"]}. \\
+\path{fullName} & \path{String} & \\
+\path{createdAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{RefreshToken} (bảng \path{refresh_tokens})} \\
+\path{id} & \path{String (UUID)} & Khoá chính. \\
+\path{accountId} & \path{String} & Tham chiếu \path{Account.id}. \\
+\path{token} & \path{String} & Chuỗi JWT refresh, duy nhất. \\
+\path{expiresAt} & \path{Instant} & \\
+\path{revoked} & \path{boolean} & Đặt \path{true} khi logout hoặc bị thu hồi. \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5cm}p{7.5cm}}
+\apiTableHeader{auth-service}
+\path{POST} & \path{/api/auth/register} & Đăng ký tài khoản mới. Công khai. \\
+\path{POST} & \path{/api/auth/login} & Đăng nhập, trả access + refresh token. Công khai. \\
+\path{POST} & \path{/api/auth/refresh} & Đổi refresh token lấy access token mới. Công khai. \\
+\path{POST} & \path{/api/auth/logout} & Thu hồi refresh token hiện tại. \\
+\path{GET} & \path{/api/auth/me} & Thông tin tài khoản đang đăng nhập. \\
+\end{longtable}
+
+\section{user-service (cổng 8082)}
+
+\textbf{Mục đích:} hồ sơ người dùng, quan hệ xã hội (kết bạn, theo dõi, chặn)
+và gợi ý kết bạn.
+
+\subsubsection*{Cơ sở dữ liệu (\path{user_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{user-service}
+\multicolumn{3}{l}{\textbf{UserProfile} (bảng \path{user_profiles})} \\
+\path{id} & \path{String} & Bằng \path{Account.id} bên auth-service (tạo tự động qua sự kiện \path{USER_REGISTERED}). \\
+\path{fullName}, \path{avatarUrl}, \path{coverUrl}, \path{bio} & & \\
+\path{dob} & \path{LocalDate} & Ngày sinh. \\
+\path{gender} & \path{Enum} & \\
+\path{location} & \path{String} & \\
+\path{workplace} & \path{String} & Dòng tự do kiểu "Làm việc tại X / Học tại Y" (không mô hình hoá đa lịch sử công việc như Facebook thật). \\
+\path{readReceiptsEnabled} & \path{boolean} & Bật/tắt "đã xem" hai chiều cho chat — tắt cũng ẩn luôn trạng thái đã xem của người khác với mình. \\
+\midrule
+\multicolumn{3}{l}{\textbf{Friendship} (bảng \path{friendships}, unique theo cặp requester/addressee)} \\
+\path{requesterId}, \path{addresseeId} & \path{String} & \\
+\path{status} & \path{Enum} & \path{PENDING}/\path{ACCEPTED}/\path{DECLINED}. \\
+\path{createdAt}, \path{respondedAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{Follow} (bảng \path{follows}, unique theo cặp follower/followee)} \\
+\path{followerId}, \path{followeeId} & \path{String} & \\
+\path{createdAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{Block} (bảng \path{blocks}, unique theo cặp blocker/blocked)} \\
+\path{blockerId}, \path{blockedId} & \path{String} & \\
+\path{createdAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{FriendSuggestionDismissal}} \\
+\multicolumn{3}{p{14.5cm}}{Ghi nhận gợi ý kết bạn đã bị người dùng bỏ qua, để không đề xuất lại.} \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{user-service}
+\path{GET} & \path{/api/users/\{id\}} & Xem hồ sơ người dùng khác. \\
+\path{GET} & \path{/api/users/search} & Tìm người dùng theo tên. \\
+\path{GET} & \path{/api/users/me} & Hồ sơ của chính mình. \\
+\path{PUT} & \path{/api/users/me} & Cập nhật hồ sơ. \\
+\path{PUT} & \path{/api/users/me/avatar} & Cập nhật ảnh đại diện. \\
+\path{PUT} & \path{/api/users/me/cover} & Cập nhật ảnh bìa. \\
+\path{POST} & \path{/api/users/\{targetId\}/follow} & Theo dõi người dùng. \\
+\path{DELETE} & \path{/api/users/\{targetId\}/follow} & Bỏ theo dõi. \\
+\path{GET} & \path{/api/users/\{targetId\}/follow-status} & Kiểm tra trạng thái theo dõi. \\
+\path{POST} & \path{/api/users/\{targetId\}/friend-request} & Gửi lời mời kết bạn. \\
+\path{PUT} & \path{/api/users/friend-requests/\{id\}/accept} & Chấp nhận lời mời. \\
+\path{PUT} & \path{/api/users/friend-requests/\{id\}/decline} & Từ chối lời mời. \\
+\path{DELETE} & \path{/api/users/friends/\{friendId\}} & Huỷ kết bạn. \\
+\path{GET} & \path{/api/users/me/friends} & Danh sách bạn bè. \\
+\path{GET} & \path{/api/users/me/friend-requests} & Lời mời kết bạn đang chờ. \\
+\path{GET} & \path{/api/users/\{targetId\}/friendship-status} & Trạng thái quan hệ bạn bè với một người. \\
+\path{GET} & \path{/api/users/\{id\}/friend-ids} & Danh sách ID bạn bè (dùng nội bộ, ví dụ post-service kiểm tra quyền \path{FRIENDS}). \\
+\path{POST}/\path{DELETE} & \path{/api/users/\{targetId\}/block} & Chặn / bỏ chặn người dùng. \\
+\path{GET} & \path{/api/users/me/blocked} & Danh sách đã chặn. \\
+\path{DELETE} & \path{/api/users/friend-suggestions/\{targetId\}} & Bỏ qua một gợi ý kết bạn. \\
+\end{longtable}
+
+\section{media-service (cổng 8083)}
+
+\textbf{Mục đích:} nhận upload và cấp phát URL cho file media (ảnh/video),
+lưu nhị phân trên MinIO (tương thích S3), lưu metadata trên PostgreSQL.
+
+\subsubsection*{Cơ sở dữ liệu (\path{media_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{MediaFile}
+\path{id} & \path{String (UUID)} & \\
+\path{ownerId} & \path{String} & Người upload. \\
+\path{objectKey} & \path{String} & Khoá đối tượng trong bucket MinIO. \\
+\path{url} & \path{String} & URL truy cập công khai/đã ký. \\
+\path{contentType} & \path{String} & MIME type. \\
+\path{purpose} & \path{Enum (MediaPurpose)} & Ví dụ: \path{AVATAR}, \path{COVER}, \path{POST}, \path{STORY}, \path{REEL}, ... \\
+\path{sizeBytes} & \path{long} & \\
+\path{createdAt} & \path{Instant} & \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5cm}p{7.5cm}}
+\apiTableHeader{media-service}
+\path{POST} & \path{/api/media} & Upload file (multipart), trả về metadata + URL. \\
+\path{GET} & \path{/api/media/\{id\}} & Lấy metadata một file. \\
+\path{DELETE} & \path{/api/media/\{id\}} & Xoá file (cả object trên MinIO lẫn metadata). \\
+\end{longtable}
+
+\section{post-service (cổng 8084)}
+
+\textbf{Mục đích:} CRUD bài viết, chia sẻ/repost, gắn thẻ người dùng, quyền
+riêng tư (kể cả tuỳ biến theo danh sách người xem cụ thể), ghim bài, đăng bài
+trong nhóm/trang.
+
+\subsubsection*{Cơ sở dữ liệu (\path{post_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{Post}
+\path{id} & \path{String (UUID)} & \\
+\path{authorId} & \path{String} & \\
+\path{content} & \path{Text} & \\
+\path{mediaUrls} & \path{List<String>} & Bảng phụ \path{post_media_urls}. \\
+\path{privacy} & \path{Enum} & \path{PUBLIC}/\path{FRIENDS}/\path{CUSTOM}/... \\
+\path{customAudienceUserIds} & \path{List<String>} & Chỉ dùng khi \path{privacy = CUSTOM}; bảng phụ \path{post_custom_audience}. \\
+\path{taggedUserIds} & \path{List<String>} & Bảng phụ \path{post_tagged_users}; phát sự kiện \path{POST_TAGGED} cho từng người được gắn thẻ. \\
+\path{groupId}, \path{pageId} & \path{String} & Khác null nếu bài đăng trong nhóm/trang. \\
+\path{sharedPostId} & \path{String} & Khác null nếu đây là bài chia sẻ lại một bài viết khác (lấy riêng qua \path{GET /api/posts/\{sharedPostId\}}). \\
+\path{sharedReelId} & \path{String} & Khác null nếu chia sẻ lại một reel (loại trừ lẫn nhau với \path{sharedPostId}). \\
+\path{commentCount}, \path{reactionCount}, \path{shareCount} & \path{int} & Bộ đếm, đồng bộ qua Kafka. \\
+\path{pinned} & \path{boolean} & Bài viết được ghim lên đầu trang cá nhân. \\
+\path{createdAt}, \path{updatedAt} & \path{Instant} & \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{post-service}
+\path{POST} & \path{/api/posts} & Tạo bài viết mới; phát sự kiện \path{POST_CREATED} (và \path{POST_TAGGED} nếu có gắn thẻ). \\
+\path{GET} & \path{/api/posts/\{id\}} & Xem chi tiết một bài viết (kiểm tra quyền riêng tư). \\
+\path{GET} & \path{/api/posts/search} & Tìm bài viết theo nội dung. \\
+\path{PUT} & \path{/api/posts/\{id\}} & Sửa bài viết (chỉ tác giả). \\
+\path{DELETE} & \path{/api/posts/\{id\}} & Xoá bài viết. \\
+\path{GET} & \path{/api/posts/author/\{authorId\}} & Danh sách bài viết của một người (enforce quyền riêng tư theo người xem hiện tại, có gọi Feign sang user-service kiểm tra bạn bè nếu \path{privacy = FRIENDS}). \\
+\path{PUT}/\path{DELETE} & \path{/api/posts/\{id\}/pin} & Ghim / bỏ ghim bài viết. \\
+\path{POST} & \path{/api/posts/\{id\}/share} & Chia sẻ lại một bài viết (tăng \path{shareCount} bài gốc). \\
+\path{POST} & \path{/api/posts/share-reel/\{reelId\}} & Chia sẻ lại một reel dưới dạng bài viết. \\
+\path{GET} & \path{/api/posts/group/\{groupId\}} & Bài viết trong một nhóm. \\
+\path{GET} & \path{/api/posts/page/\{pageId\}} & Bài viết trong một trang (fanpage). \\
+\path{GET} & \path{/api/posts/batch} & Lấy nhiều bài viết theo danh sách ID (dùng nội bộ, ví dụ feed-service/search-service). \\
+\end{longtable}
+
+\section{comment-service (cổng 8085)}
+
+\textbf{Mục đích:} bình luận (kèm trả lời lồng nhau) trên bài viết hoặc reel.
+
+\subsubsection*{Cơ sở dữ liệu (\path{comment_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{Comment}
+\path{id} & \path{String (UUID)} & \\
+\path{targetType} & \path{Enum (TargetType)} & \path{POST} hoặc \path{REEL} — cùng cấu trúc với reaction-service để dễ mở rộng thêm loại nội dung khác sau này. \\
+\path{targetId} & \path{String} & ID bài viết/reel được bình luận. \\
+\path{authorId} & \path{String} & \\
+\path{targetOwnerId} & \path{String} & Chủ sở hữu nội dung (để phát thông báo mà không cần gọi ngược sang post/reels-service). \\
+\path{parentCommentId} & \path{String} & Khác null nếu là trả lời một bình luận khác. \\
+\path{content} & \path{Text} & \\
+\path{deleted} & \path{boolean} & Xoá mềm. \\
+\path{createdAt}, \path{updatedAt} & \path{Instant} & \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{comment-service}
+\path{POST} & \path{/api/comments} & Tạo bình luận mới; phát sự kiện \path{COMMENT_CREATED}. \\
+\path{GET} & \path{/api/comments/\{id\}/replies} & Danh sách trả lời của một bình luận. \\
+\path{PUT} & \path{/api/comments/\{id\}} & Sửa nội dung bình luận. \\
+\path{DELETE} & \path{/api/comments/\{id\}} & Xoá (mềm) bình luận. \\
+\end{longtable}
+
+\section{reaction-service (cổng 8086)}
+
+\textbf{Mục đích:} quản lý cảm xúc (reaction) và mục đã lưu (saved item) trên
+bài viết/bình luận/reel — hai chức năng gộp chung một service vì cùng mô hình
+truy cập dữ liệu.
+
+\subsubsection*{Cơ sở dữ liệu (\path{reaction_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{reaction-service}
+\multicolumn{3}{l}{\textbf{Reaction} (bảng \path{reactions}, unique theo (targetType, targetId, userId))} \\
+\path{targetType} & \path{Enum} & Loại đối tượng được react. \\
+\path{targetId} & \path{String} & \\
+\path{targetOwnerId} & \path{String} & Do client cung cấp trực tiếp (đơn giản hoá có chủ đích — xem Chương~\ref{ch:limitations}). \\
+\path{userId} & \path{String} & Người react. \\
+\path{type} & \path{Enum (ReactionType)} & LIKE/LOVE/HAHA/... \\
+\path{createdAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{SavedItem} (bảng \path{saved_items}, unique theo (targetType, targetId, userId))} \\
+\multicolumn{3}{p{14.5cm}}{Cấu trúc giống hệt Reaction (không có trường \path{type}) — đại diện cho việc một người dùng "lưu" một nội dung.} \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{reaction-service}
+\path{POST} & \path{/api/reactions} & Thả/đổi cảm xúc lên một đối tượng; phát sự kiện Kafka \path{REACTION}. \\
+\path{GET} & \path{/api/reactions/summary} & Tổng hợp số lượng theo từng loại cảm xúc cho một đối tượng. \\
+\path{GET} & \path{/api/reactions/me} & Cảm xúc hiện tại của người dùng trên một đối tượng. \\
+\path{POST}/\path{DELETE} & \path{/api/saved} & Lưu / bỏ lưu một đối tượng. \\
+\path{GET} & \path{/api/saved/me} & Kiểm tra một đối tượng có đang được lưu không. \\
+\path{GET} & \path{/api/saved/mine} & Danh sách toàn bộ mục đã lưu của người dùng. \\
+\end{longtable}
+
+\section{story-service (cổng 8087)}
+
+\textbf{Mục đích:} story dạng ảnh/video tự động biến mất sau một khoảng thời
+gian (mặc định theo Facebook: 24 giờ).
+
+\subsubsection*{Cơ sở dữ liệu (MongoDB, \path{story_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{Story}
+\path{id} & \path{String} & \\
+\path{authorId} & \path{String} & \\
+\path{mediaUrl}, \path{mediaType} & & Ảnh hoặc video. \\
+\path{caption} & \path{String} & \\
+\path{viewerIds} & \path{Set<String>} & Người đã xem. \\
+\path{textOverlays} & \path{List<TextOverlay>} & Văn bản chèn lên story (nội dung, vị trí, kiểu chữ). \\
+\path{createdAt}, \path{expiresAt} & \path{Instant} & \path{expiresAt} có \emph{TTL index} (\path{expireAfterSeconds = 0}) — MongoDB tự xoá document đúng thời điểm này mà không cần job dọn dẹp riêng. \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{story-service}
+\path{POST} & \path{/api/stories} & Đăng story mới; phát sự kiện \path{STORY_CREATED}. \\
+\path{GET} & \path{/api/stories/feed} & Story còn hiệu lực của bạn bè/người theo dõi. \\
+\path{GET} & \path{/api/stories/author/\{authorId\}} & Story còn hiệu lực của một người cụ thể. \\
+\path{POST} & \path{/api/stories/\{id\}/view} & Đánh dấu đã xem. \\
+\path{DELETE} & \path{/api/stories/\{id\}} & Xoá story trước hạn. \\
+\end{longtable}
+
+\section{reels-service (cổng 8088)}
+
+\textbf{Mục đích:} video ngắn dạng Reels, gồm bộ đếm lượt xem/bình luận/cảm
+xúc/chia sẻ được đồng bộ từ các service khác qua Kafka.
+
+\subsubsection*{Cơ sở dữ liệu (MongoDB, \path{reels_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{Reel}
+\path{id} & \path{String} & \\
+\path{authorId} & \path{String} & \\
+\path{videoUrl}, \path{thumbnailUrl} & \path{String} & \\
+\path{caption} & \path{String} & \\
+\path{viewCount} & \path{long} & \\
+\path{commentCount}, \path{reactionCount} & \path{int} & Đồng bộ từ sự kiện \path{COMMENT_CREATED}/\path{REACTION} qua \path{ReelEventListener}. \\
+\path{shareCount} & \path{int} & \\
+\path{createdAt} & \path{Instant} & \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{reels-service}
+\path{POST} & \path{/api/reels} & Đăng reel mới; phát sự kiện \path{REEL_CREATED}. \\
+\path{GET} & \path{/api/reels/\{id\}} & Xem chi tiết. \\
+\path{POST} & \path{/api/reels/\{id\}/view} & Tăng lượt xem. \\
+\path{POST} & \path{/api/reels/\{id\}/share-count} & Tăng bộ đếm chia sẻ (gọi từ post-service khi share-reel). \\
+\path{GET} & \path{/api/reels/feed} & Danh sách reel dạng cuộn (feed). \\
+\path{GET} & \path{/api/reels/author/\{authorId\}} & Reel của một người. \\
+\path{DELETE} & \path{/api/reels/\{id\}} & Xoá reel. \\
+\end{longtable}
+
+\section{group-service (cổng 8089)}
+
+\textbf{Mục đích:} nhóm (group) công khai/riêng tư, quản lý thành viên và vai
+trò trong nhóm.
+
+\subsubsection*{Cơ sở dữ liệu (\path{group_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{group-service}
+\multicolumn{3}{l}{\textbf{Group} (entity JPA tên \path{SocialGroup}, bảng \path{groups})} \\
+\path{id} & \path{String (UUID)} & \\
+\path{name}, \path{description} & & \\
+\path{avatarUrl}, \path{coverUrl} & & \\
+\path{privacy} & \path{Enum} & \path{PUBLIC} / \path{PRIVATE}. \\
+\path{ownerId} & \path{String} & \\
+\path{memberCount} & \path{int} & Mặc định 1 (chủ nhóm). \\
+\path{createdAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{GroupMember} (bảng \path{group_members}, unique theo (groupId, userId))} \\
+\path{groupId}, \path{userId} & \path{String} & \\
+\path{role} & \path{Enum (MemberRole)} & Ví dụ \path{OWNER}/\path{ADMIN}/\path{MEMBER}. \\
+\path{status} & \path{Enum (MemberStatus)} & Ví dụ \path{PENDING}/\path{APPROVED}. \\
+\path{joinedAt} & \path{Instant} & \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2.4cm}p{5.5cm}p{6.6cm}}
+\apiTableHeader{group-service}
+\path{POST} & \path{/api/groups} & Tạo nhóm mới. \\
+\path{GET} & \path{/api/groups} & Danh sách nhóm — bao gồm cả nhóm \path{PRIVATE} mà người gọi đã là thành viên \path{APPROVED}, không chỉ nhóm \path{PUBLIC}. \\
+\path{GET} & \path{/api/groups/\{id\}} & Chi tiết một nhóm. \\
+\path{POST} & \path{/api/groups/\{id\}/join} & Xin gia nhập nhóm (vào \path{PENDING} nếu nhóm riêng tư). \\
+\path{PUT} & \path{/api/groups/\{id\}/members/\{userId\}/approve} & Duyệt thành viên (quản trị nhóm). \\
+\path{DELETE} & \path{/api/groups/\{id\}/leave} & Rời nhóm. \\
+\path{DELETE} & \path{/api/groups/\{id\}/members/\{userId\}} & Kick thành viên. \\
+\path{PUT} & \path{/api/groups/\{id\}/members/\{userId\}/role} & Đổi vai trò thành viên. \\
+\path{GET} & \path{/api/groups/\{id\}/members} & Danh sách thành viên. \\
+\path{GET} & \path{/api/groups/me} & Danh sách nhóm mình tham gia. \\
+\end{longtable}
+
+\textbf{Ghi chú:} \path{GroupModerationListener} lắng nghe sự kiện
+\path{CONTENT_REMOVED} từ moderation-service để xoá cascade nhóm cùng toàn bộ
+bảng thành viên liên quan khi quản trị viên duyệt gỡ vi phạm.
+
+\section{fanpage-service (cổng 8090)}
+
+\textbf{Mục đích:} trang (fanpage) — luôn công khai theo thiết kế (không có
+khái niệm trang riêng tư như nhóm), có nhiều quản trị viên và người theo dõi.
+
+\subsubsection*{Cơ sở dữ liệu (\path{fanpage_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{fanpage-service}
+\multicolumn{3}{l}{\textbf{Fanpage} (bảng \path{fanpages})} \\
+\path{id} & \path{String (UUID)} & \\
+\path{name}, \path{category}, \path{description} & & \\
+\path{avatarUrl}, \path{coverUrl} & & \\
+\path{ownerId} & \path{String} & \\
+\path{followerCount} & \path{int} & \\
+\path{createdAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{PageAdmin} (bảng \path{page_admins}, unique theo (pageId, userId))} \\
+\path{pageId}, \path{userId} & \path{String} & \\
+\path{role} & \path{Enum (AdminRole)} & \\
+\path{addedAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{PageFollower} (bảng \path{page_followers}, unique theo (pageId, userId))} \\
+\path{pageId}, \path{userId} & \path{String} & \\
+\path{createdAt} & \path{Instant} & \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{fanpage-service}
+\path{POST} & \path{/api/pages} & Tạo trang mới. \\
+\path{GET} & \path{/api/pages/\{id\}} & Chi tiết một trang. \\
+\path{POST}/\path{DELETE} & \path{/api/pages/\{id\}/follow} & Theo dõi / bỏ theo dõi trang. \\
+\path{POST} & \path{/api/pages/\{id\}/admins} & Thêm quản trị viên trang. \\
+\path{DELETE} & \path{/api/pages/\{id\}/admins/\{userId\}} & Gỡ quản trị viên. \\
+\path{GET} & \path{/api/pages/\{id\}/followers} & Danh sách người theo dõi. \\
+\path{GET} & \path{/api/pages/me/managed} & Trang mình đang quản trị. \\
+\path{GET} & \path{/api/pages/me/followed} & Trang mình đang theo dõi. \\
+\end{longtable}
+
+\section{dating-service (cổng 8091)}
+
+\textbf{Mục đích:} tính năng hẹn hò kiểu Tinder — hồ sơ hẹn hò riêng (khác hồ
+sơ mạng xã hội), vuốt (swipe) và ghép đôi (match) theo thuật toán chấm điểm
+(chi tiết thuật toán ở mục~\ref{sec:matching}).
+
+\subsubsection*{Cơ sở dữ liệu (\path{dating_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{dating-service}
+\multicolumn{3}{l}{\textbf{DatingProfile} (bảng \path{dating_profiles})} \\
+\path{id} & \path{String} & Bằng \path{userId}. \\
+\path{gender} & \path{Enum} & Giới tính của chính chủ hồ sơ. \\
+\path{birthDate} & \path{LocalDate} & \\
+\path{bio} & \path{Text} & \\
+\path{interests} & \path{List<String>} & Bảng phụ \path{dating_profile_interests}. \\
+\path{minAgePreference}, \path{maxAgePreference} & \path{int} & \\
+\path{genderPreference} & \path{Enum} & Giới tính \emph{đang tìm} — khác với trường \path{gender} ở trên. \\
+\path{photos} & \path{List<String>} & Bảng phụ \path{dating_profile_photos}. \\
+\path{active} & \path{boolean} & Tắt để tạm ẩn khỏi vòng quay ghép đôi. \\
+\path{createdAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{Swipe} (bảng \path{swipes}, unique theo (swiperId, targetId))} \\
+\path{swiperId}, \path{targetId} & \path{String} & \\
+\path{action} & \path{Enum (SwipeAction)} & \path{LIKE} / \path{PASS}. \\
+\path{createdAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{Match} (bảng \path{matches}, unique theo cặp (user1Id, user2Id))} \\
+\multicolumn{3}{p{14.5cm}}{Được tạo khi cả hai phía đều \path{LIKE} nhau (mutual like); kèm phát sự kiện Kafka \path{MATCH}.} \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{dating-service}
+\path{PUT} & \path{/api/dating/profile} & Tạo/cập nhật hồ sơ hẹn hò. \\
+\path{GET} & \path{/api/dating/profile/me} & Xem hồ sơ hẹn hò của mình. \\
+\path{GET} & \path{/api/dating/candidates} & Danh sách ứng viên phù hợp, kèm điểm số (0--100). \\
+\path{POST} & \path{/api/dating/swipe} & Vuốt LIKE/PASS một ứng viên; nếu mutual LIKE thì tạo \path{Match} + phát sự kiện. \\
+\path{GET} & \path{/api/dating/matches} & Danh sách đã match. \\
+\path{DELETE} & \path{/api/dating/matches/\{id\}} & Huỷ một match (unmatch). \\
+\end{longtable}
+
+\section{chat-service (cổng 8092)}
+
+\textbf{Mục đích:} nhắn tin thời gian thực (1--1 và có thể mở rộng nhóm),
+trạng thái online (presence), tự động tạo cuộc trò chuyện khi có match hẹn hò
+mới.
+
+\subsubsection*{Cơ sở dữ liệu (MongoDB \path{chat_db} + Redis presence)}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{chat-service}
+\multicolumn{3}{l}{\textbf{Conversation} (collection \path{conversations})} \\
+\path{id} & \path{String} & \\
+\path{type} & \path{Enum (ConversationType)} & Ví dụ 1--1, nhóm. \\
+\path{participantIds} & \path{List<String>} & \\
+\path{lastMessagePreview}, \path{lastMessageAt} & & Hiển thị nhanh trong danh sách hội thoại. \\
+\path{createdAt} & \path{Instant} & \\
+\midrule
+\multicolumn{3}{l}{\textbf{Message} (collection \path{messages})} \\
+\path{id}, \path{conversationId}, \path{senderId} & \path{String} & \\
+\path{content}, \path{mediaUrl} & & \\
+\path{storyReplyId}, \path{storyReplyPreviewUrl} & \path{String} & Khác null nếu tin nhắn là trả lời một story. \\
+\path{sentAt} & \path{Instant} & \\
+\path{readBy} & \path{Set<String>} & Người đã đọc (đọc-đã-xem hai chiều, xem \path{readReceiptsEnabled} ở user-service). \\
+\path{deleted} & \path{boolean} & Thu hồi tin nhắn (xoá mềm). \\
+\end{longtable}
+
+\subsubsection*{API chính (REST)}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{chat-service}
+\path{POST} & \path{/api/chat/conversations} & Tạo (hoặc lấy đã có) hội thoại với một người. \\
+\path{GET} & \path{/api/chat/conversations} & Danh sách hội thoại của mình. \\
+\path{GET} & \path{/api/chat/conversations/\{id\}/messages} & Lịch sử tin nhắn (phân trang). \\
+\path{POST} & \path{/api/chat/conversations/\{id\}/read} & Đánh dấu đã đọc. \\
+\path{DELETE} & \path{/api/chat/messages/\{id\}} & Thu hồi tin nhắn. \\
+\path{GET} & \path{/api/chat/presence/\{userId\}} & Trạng thái online của một người. \\
+\path{POST} & \path{/api/chat/presence/batch} & Trạng thái online của nhiều người cùng lúc. \\
+\end{longtable}
+
+\subsubsection*{Kênh thời gian thực (WebSocket/STOMP)}
+Gateway định tuyến riêng \path{/ws/**} (\path{uri: lb:ws://CHAT-SERVICE}) sang
+chat-service. Client kết nối \path{ws://.../ws?token=<JWT>} (SockJS) hoặc
+\path{ws://.../ws/websocket?token=<JWT>} (raw WebSocket, bỏ qua khung SockJS).
+Tin nhắn gửi qua STOMP được publish kèm sự kiện Kafka \path{MESSAGE} để
+notification-service báo cho người nhận đang offline. \path{MatchEventListener}
+lắng nghe sự kiện \path{MATCH} từ dating-service để tự tạo \path{Conversation}
+ngay khi hai người vừa ghép đôi thành công, không cần người dùng tự bắt
+chuyện trước.
+
+\section{notification-service (cổng 8093)}
+
+\textbf{Mục đích:} tổng hợp và đẩy thông báo thời gian thực cho mọi loại sự
+kiện phát sinh từ các service khác.
+
+\subsubsection*{Cơ sở dữ liệu (MongoDB \path{notification_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{Notification}
+\path{id} & \path{String} & \\
+\path{recipientId} & \path{String} & Người nhận thông báo. \\
+\path{actorId} & \path{String} & Người gây ra sự kiện (ví dụ người thả cảm xúc). \\
+\path{type} & \path{Enum (NotificationType)} & \path{FRIEND_REQUEST}, \path{COMMENT}, \path{REACTION}, \path{GROUP}, \path{MATCH}, \path{MESSAGE}, \path{TAG}, \path{FOLLOW}. \\
+\path{targetType}, \path{targetId} & \path{String} & Đối tượng liên quan (bài viết, hội thoại, ...). \\
+\path{message} & \path{String} & Nội dung hiển thị. \\
+\path{read} & \path{boolean} & \\
+\path{createdAt} & \path{Instant} & Có \emph{TTL index} 8 tuần — MongoDB tự xoá thông báo cũ. \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{notification-service}
+\path{GET} & \path{/api/notifications/me} & Danh sách thông báo của mình (phân trang). \\
+\path{PUT} & \path{/api/notifications/\{id\}/read} & Đánh dấu một thông báo đã đọc. \\
+\path{PUT} & \path{/api/notifications/read-all} & Đánh dấu tất cả đã đọc. \\
+\path{GET} & \path{/api/notifications/unread-count} & Số thông báo chưa đọc (hiển thị badge). \\
+\path{DELETE} & \path{/api/notifications/\{id\}} & Xoá một thông báo. \\
+\end{longtable}
+
+\textbf{Ghi chú:} \path{NotificationEventListener} có 8 phương thức
+\path{@KafkaListener} — lắng nghe đồng thời \path{FRIEND_REQUEST},
+\path{COMMENT_CREATED}, \path{REACTION}, \path{GROUP}, \path{MATCH},
+\path{MESSAGE}, \path{POST_TAGGED}, \path{FOLLOW} — biến mỗi sự kiện nghiệp vụ
+từ bất kỳ service nào thành một document \path{Notification} rồi đẩy realtime
+qua kênh WebSocket riêng \path{/ws-notifications} (gateway route
+\path{uri: lb:ws://NOTIFICATION-SERVICE}), độc lập với kênh chat vì gateway
+chỉ định tuyến được một service cho mỗi path.
+
+\section{feed-service (cổng 8094)}
+
+\textbf{Mục đích:} bảng tin cá nhân, dùng mô hình \emph{fan-out-on-write}
+(ghi lúc đăng bài) kết hợp xếp hạng lúc đọc (ranking-on-read) để vừa nhanh vừa
+không cứng nhắc theo thời gian thuần tuý.
+
+\textbf{Lưu trữ:} không có cơ sở dữ liệu quan hệ riêng — dùng Redis \emph{sorted
+set} (ZSET) cho mỗi người dùng, phần tử là ID bài viết, điểm số (score) là
+thời điểm đăng (timestamp). Việc \emph{ghi} (fan-out) chỉ lưu timestamp thuần;
+việc \emph{xếp hạng} chỉ tính lúc đọc — nhờ vậy đổi công thức xếp hạng không
+cần migrate dữ liệu đã fan-out.
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{feed-service}
+\path{GET} & \path{/api/feed/me} & Bảng tin đã xếp hạng (phân trang) — xem công thức ở mục~\ref{sec:feedrank}. \\
+\path{POST} & \path{/api/feed/seen} & Đánh dấu một loạt bài viết đã hiển thị (phục vụ phân trang/infinite scroll không lặp). \\
+\end{longtable}
+
+\textbf{Ghi chú:} \path{PostCreatedConsumer} lắng nghe sự kiện Kafka
+\path{POST_CREATED} từ post-service, tra cứu danh sách bạn bè/người theo dõi
+của tác giả (qua Feign sang user-service) rồi ghi (fan-out) ID bài viết vào
+ZSET Redis của từng người nhận.
+
+\section{moderation-service (cổng 8095)}
+
+\textbf{Mục đích:} kiểm duyệt nội dung — vừa chủ động (lọc từ ngữ thô tục lúc
+tạo nội dung), vừa bị động (người dùng báo cáo, quản trị viên duyệt và xử lý).
+
+\subsubsection*{Cơ sở dữ liệu (\path{moderation_db})}
+\begin{longtable}{p{3.2cm}p{3cm}p{8.3cm}}
+\entityTableHeader{Report}
+\path{id} & \path{String (UUID)} & \\
+\path{reporterId} & \path{String} & Người báo cáo. \\
+\path{targetType} & \path{Enum (ReportTargetType)} & Loại nội dung bị báo cáo (POST/COMMENT/REEL/STORY/GROUP/FANPAGE/USER, ...). \\
+\path{targetId} & \path{String} & \\
+\path{reason} & \path{Enum (ReportReason)} & \\
+\path{description} & \path{Text} & Mô tả thêm của người báo cáo. \\
+\path{status} & \path{Enum (ReportStatus)} & \path{PENDING} mặc định. \\
+\path{reviewedBy}, \path{reviewedAt} & & Quản trị viên xử lý và thời điểm. \\
+\path{resolutionNote} & \path{Text} & \\
+\path{createdAt} & \path{Instant} & \\
+\end{longtable}
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{moderation-service}
+\path{POST} & \path{/api/moderation/reports} & Người dùng gửi báo cáo vi phạm. \\
+\path{GET} & \path{/api/moderation/reports/mine} & Báo cáo mình đã gửi. \\
+\path{GET} & \path{/api/moderation/reports} & Hàng đợi báo cáo (chỉ \path{ADMIN}). \\
+\path{GET} & \path{/api/moderation/reports/\{id\}} & Chi tiết một báo cáo (chỉ \path{ADMIN}). \\
+\path{PUT} & \path{/api/moderation/reports/\{id\}/resolve} & Xử lý báo cáo (chỉ \path{ADMIN}) — nếu hành động là \path{REMOVE_CONTENT} thì phát sự kiện \path{CONTENT_REMOVED}. \\
+\end{longtable}
+
+\textbf{Ghi chú:} bộ lọc từ ngữ thô tục (tiếng Anh + tiếng Việt, giữ nguyên
+dấu thanh) được nhúng trực tiếp vào bước tạo nội dung ở post-service,
+comment-service, reels-service, story-service, group-service, fanpage-service
+— chặn ngay tại nguồn thay vì chỉ xử lý hậu kiểm.
+
+\section{search-service (cổng 8096)}
+
+\textbf{Mục đích:} tìm kiếm tổng hợp trên nhiều loại đối tượng cùng lúc,
+không sở hữu dữ liệu riêng mà tổng hợp qua Feign.
+
+\subsubsection*{API chính}
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\apiTableHeader{search-service}
+\path{GET} & \path{/api/search?q=\&limit=} & Gộp kết quả từ user-service, group-service, fanpage-service, post-service. \\
+\end{longtable}
+
+\textbf{Ghi chú:} mỗi Feign client gọi sang 4 service trên có circuit breaker
++ fallback trả danh sách rỗng riêng — một service phía sau gặp sự cố không
+làm sập toàn bộ chức năng tìm kiếm, chỉ thiếu kết quả thuộc loại đó.
+
+% ============================================================
+\chapter{Các thuật toán và cơ chế nâng cao}
+% ============================================================
+
+\section{Xếp hạng bảng tin theo mức độ tương tác}
+\label{sec:feedrank}
+
+Mặc định, một bảng tin chỉ sắp theo thời gian đăng sẽ khiến nội dung tương tác
+cao nhanh chóng bị chìm. \path{feed-service} tách rời việc \emph{ghi} và việc
+\emph{xếp hạng}:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Ghi (fan-out-on-write):} khi có bài viết mới
+    (\path{POST_CREATED}), \path{FeedFanoutService} chỉ ghi cặp (ID bài viết,
+    thời điểm đăng) vào Redis ZSET của từng người theo dõi/bạn bè tác giả —
+    không tính điểm ở bước này.
+    \item \textbf{Đọc (ranking-on-read):} \path{FeedQueryService} lấy một tập
+    ứng viên giới hạn từ ZSET (theo thời gian gần nhất), sau đó chấm điểm mỗi
+    bài viết theo công thức kiểu Hacker News:
+\end{enumerate}
+
+\begin{quote}
+\centering
+\path{score = recencyScore x (1 + log(1 + reactionCount + 2 x commentCount))}
+\end{quote}
+
+trong đó \path{recencyScore} giảm dần theo thời gian kể từ lúc đăng, còn phần
+logarit khuếch đại nhẹ các bài có tương tác cao (bình luận được tính trọng số
+gấp đôi cảm xúc). Danh sách ứng viên sau khi chấm điểm được sắp giảm dần rồi
+mới phân trang trong bộ nhớ. Vì việc ghi không phụ thuộc công thức, đổi trọng
+số/công thức xếp hạng chỉ cần sửa \path{FeedQueryService}, không cần chạy lại
+migrate dữ liệu đã fan-out.
+
+\section{Thuật toán ghép đôi (matching) cho dating}
+\label{sec:matching}
+
+\path{DatingProfile} tách bạch hai khái niệm dễ nhầm: \path{gender} (giới
+tính của chính chủ hồ sơ) và \path{genderPreference} (giới tính đang tìm
+kiếm). \path{GET /api/dating/candidates} thực hiện hai bước:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Lọc tương thích hai chiều:} chỉ giữ lại ứng viên mà giới
+    tính của họ khớp \path{genderPreference} của người xem \emph{và ngược
+    lại} (giới tính người xem cũng khớp \path{genderPreference} của ứng viên).
+    \item \textbf{Chấm điểm 0--100} cho các ứng viên còn lại, gồm hai phần:
+\end{enumerate}
+
+\begin{longtable}{p{2.5cm}p{2cm}p{9.5cm}}
+\threecolTableHeader{Bảng chấm điểm matching}{Tiêu chí}{Điểm tối đa}{Cách tính}
+Độ tuổi phù hợp hai chiều & 60 điểm & Cả hai người đều nằm trong khoảng
+\path{[minAgePreference, maxAgePreference]} của đối phương thì đạt điểm tối
+đa; càng lệch khỏi khoảng mong muốn của một trong hai bên, điểm càng giảm. \\
+Sở thích chung & 40 điểm & Tính theo \emph{hệ số tương đồng Jaccard}
+(\path{|A ∩ B| / |A ∪ B|}) trên tập \path{interests} của hai hồ sơ, nhân với
+40. \\
+\end{longtable}
+
+Kết quả trả về qua \path{CandidateResponse} kèm luôn điểm số thành phần —
+minh bạch thuật toán cho phía client thay vì chỉ trả một danh sách đã sắp sẵn
+không rõ căn cứ. Khi hai người cùng vuốt \path{LIKE} lẫn nhau
+(\path{POST /api/dating/swipe}), hệ thống tạo bản ghi \path{Match} và phát sự
+kiện Kafka \path{MATCH} — được cả notification-service (báo tin) lẫn
+chat-service (tự tạo cuộc trò chuyện) lắng nghe.
+
+\section{Circuit breaker (Resilience4j) trên các Feign client}
+
+Mọi lệnh gọi liên service qua OpenFeign đều được bọc trong một circuit
+breaker Resilience4j với \path{fallbackFactory} riêng, tuân theo nguyên tắc:
+
+\begin{itemize}[nosep]
+    \item \textbf{Lỗi nghiệp vụ} (ví dụ service đích trả \path{404 Not Found}
+    vì tài nguyên không tồn tại) — vẫn được rethrow đúng như vậy cho tầng gọi,
+    \emph{không} bị circuit breaker nuốt mất, vì đây là phản hồi hợp lệ về
+    mặt nghiệp vụ.
+    \item \textbf{Lỗi hạ tầng} (service đích không phản hồi, timeout, connection
+    refused) — circuit breaker mở sau một ngưỡng lỗi liên tiếp, fallback trả
+    về \path{ServiceUnavailableException} (503) hoặc một giá trị mặc định an
+    toàn (ví dụ danh sách rỗng cho search-service) tuỳ ngữ cảnh nghiệp vụ, để
+    một service sập không kéo sập dây chuyền toàn hệ thống.
+\end{itemize}
+
+Các nơi áp dụng: comment-service, story-service, feed-service (Feign sang
+user-service/post-service/reels-service), search-service (Feign sang cả 4
+service dữ liệu), post-service (Feign sang user-service để kiểm tra bạn bè).
+Trạng thái từng circuit breaker (CLOSED/OPEN/HALF\_OPEN) xem tại
+\path{actuator/circuitbreakers} của service tương ứng.
+
+\section{Pipeline kiểm duyệt nội dung}
+
+Kiểm duyệt vận hành theo hai lớp bổ sung cho nhau:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Chủ động (lúc tạo nội dung):} một bộ lọc từ ngữ thô tục
+    (tiếng Anh + tiếng Việt, giữ nguyên dấu thanh để bắt cả biến thể có dấu)
+    được gọi ngay trong luồng tạo nội dung của 6 service:
+    post-service/comment-service/reels-service/story-service/group-service/
+    fanpage-service — chặn (từ chối request) trước khi nội dung vi phạm kịp
+    lưu vào database.
+    \item \textbf{Bị động (hậu kiểm qua báo cáo):} người dùng báo cáo nội
+    dung/tài khoản vi phạm (\path{POST /api/moderation/reports}); quản trị
+    viên (role \path{ADMIN}) duyệt hàng đợi
+    (\path{GET /api/moderation/reports}) và ra quyết định
+    (\path{PUT /api/moderation/reports/\{id\}/resolve}). Nếu hành động là
+    \path{REMOVE_CONTENT}, moderation-service phát sự kiện Kafka
+    \path{CONTENT_REMOVED} — group-service và fanpage-service lắng nghe để
+    xoá cascade luôn cả bảng thành viên/quản trị/người theo dõi liên quan,
+    tránh để lại dữ liệu mồ côi.
+\end{enumerate}
+
+\section{Tìm kiếm tổng hợp (aggregation pattern)}
+
+\path{search-service} không lưu trữ dữ liệu riêng mà đóng vai trò tầng tổng
+hợp (aggregator): một request \path{GET /api/search} được "quạt ra" (fan-out)
+thành 4 lệnh gọi Feign song song sang user-service, group-service,
+fanpage-service, post-service, rồi gộp kết quả lại. Đây là một biến thể của
+mẫu \emph{API Composition} thường gặp trong microservices khi cần một view
+tổng hợp trên nhiều service mà không muốn tạo thêm một database vật lý mới
+chỉ để phục vụ tìm kiếm.
+
+% ============================================================
+\chapter{Observability và DevOps}
+\label{ch:observability}
+% ============================================================
+
+Một hệ thống nhiều service độc lập gần như không thể debug bằng cách đọc log
+từng container thủ công — chương này mô tả bộ ba observability (tracing,
+logging, metrics) và pipeline CI/CD đi kèm.
+
+\section{Distributed tracing — Zipkin}
+
+Mọi request đi qua API Gateway đều được gắn một \path{traceId} xuyên suốt mọi
+service mà nó đi qua, kể cả những chặng bất đồng bộ qua Kafka (nhờ context
+propagation của Micrometer Tracing). Sampling mặc định là \textbf{100\%}
+(\path{TRACING_SAMPLING_PROBABILITY}, mặc định \path{1.0}) — hợp lý cho môi
+trường demo/dev vì mọi request đều xem được trace ngay lập tức; khi triển
+khai thật nên hạ xuống (ví dụ \path{0.1} tương đương 10\%) để giảm tải lưu trữ
+Zipkin, chỉnh qua biến môi trường mà không cần build lại image. Giao diện xem
+trace: \path{http://localhost:9411}.
+
+\section{Log tập trung — Loki + Promtail + Grafana}
+
+Promtail thu thập log của \emph{mọi} container Docker (mount trực tiếp
+\path{/var/lib/docker/containers} và Docker socket), đẩy vào Loki; Grafana
+đọc từ Loki qua mục Explore, lọc theo nhãn service (ví dụ
+\path{\{service="auth-service"\}}). Mỗi dòng log nghiệp vụ đều được in kèm
+\path{[traceId-spanId]} ở đầu dòng — cho phép từ một dòng log bất thường tra
+ngược đúng trace tương ứng trên Zipkin để xem toàn cảnh request đó đi qua
+những service nào.
+
+\section{Metrics — Prometheus + Grafana dashboard}
+
+Prometheus tự phát hiện (service discovery) các target cần scrape metrics
+thông qua Eureka thay vì phải liệt kê thủ công từng service trong file cấu
+hình — mỗi service mới thêm vào hệ thống tự động được scrape mà không cần sửa
+Prometheus. Dashboard Grafana \textbf{Service Overview} được provision sẵn
+(mở ra là thấy ngay, không cần tự tạo), hiển thị request rate, p99 latency,
+error rate, JVM heap và CPU theo từng service. Grafana chạy ở chế độ anonymous
+admin (\path{GF_AUTH_ANONYMOUS_ENABLED=true}) — không cần đăng nhập, phù hợp
+môi trường demo/đồ án.
+
+\section{CI/CD — GitHub Actions}
+
+Pipeline (\path{.github/workflows/ci-cd.yml}) chạy tự động trên mỗi push/PR:
+
+\begin{enumerate}[nosep]
+    \item Build + test toàn bộ reactor Maven (20 module) trong một lần chạy
+    duy nhất — tận dụng cơ chế build đa module để không phải build lại các
+    module không đổi.
+    \item Chạy integration test dùng \textbf{Testcontainers} — khởi động
+    PostgreSQL/MongoDB/Kafka thật trong container tạm thời cho mỗi lần test,
+    đảm bảo test sát với môi trường thật hơn so với mock.
+    \item Build Docker image cho toàn bộ service.
+    \item Khi merge vào nhánh \path{main}: push image lên GitHub Container
+    Registry (GHCR).
+\end{enumerate}
+
+% ============================================================
+\chapter{Triển khai hệ thống}
+% ============================================================
+
+\section{Kiến trúc triển khai bằng Docker Compose}
+
+Toàn hệ thống (hạ tầng + 16 business service + 3 service hạ tầng Spring Cloud
++ frontend) được mô tả trong một file \path{docker-compose.yml} duy nhất, gồm
+30 container. Bảng dưới tóm tắt cổng và phụ thuộc khởi động chính:
+
+\begin{longtable}{p{4cm}p{2cm}p{7.5cm}}
+\threecolTableHeader{Bảng cổng dịch vụ}{Service}{Cổng}{Ghi chú}
+PostgreSQL & 5432 & Container \path{sma-postgres}, 10 database. \\
+MongoDB & 27017 & Container \path{sma-mongodb}. \\
+Redis & 6379 & Container \path{sma-redis}. \\
+Kafka & 9092 & Chế độ KRaft, không cần Zookeeper. \\
+MinIO & 9000 / 9001 & API S3 / Console quản trị. \\
+Zipkin & 9411 & Giao diện xem trace. \\
+Prometheus & 9090 & \\
+Grafana & 3000 & Anonymous admin. \\
+Loki & 3100 & Không expose trực tiếp cho người dùng cuối. \\
+Eureka Server & 8761 & Dashboard service discovery. \\
+Config Server & 8888 & \\
+API Gateway & 8080 & Điểm vào duy nhất cho toàn bộ API + WebSocket. \\
+auth-service & 8081 & \\
+user-service & 8082 & \\
+media-service & 8083 & \\
+post-service & 8084 & \\
+comment-service & 8085 & \\
+reaction-service & 8086 & \\
+story-service & 8087 & \\
+reels-service & 8088 & \\
+group-service & 8089 & \\
+fanpage-service & 8090 & \\
+dating-service & 8091 & \\
+chat-service & 8092 & \\
+notification-service & 8093 & \\
+feed-service & 8094 & \\
+moderation-service & 8095 & \\
+search-service & 8096 & \\
+Frontend (Flutter Web) & 3001 & Nginx phục vụ file tĩnh, forward tới cổng 80 trong container. \\
+\end{longtable}
+
+\section{Quy trình build và chạy}
+
+Vì Dockerfile của mỗi service chỉ đơn giản \path{COPY target/*.jar app.jar}
+(không build Maven bên trong image), file \path{.jar} phải được build sẵn
+\emph{trước} khi build Docker image:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Build toàn bộ reactor Maven:}
+    \begin{quote}\path{mvn -q -B clean package -DskipTests}\end{quote}
+    (chạy ở thư mục gốc dự án — build tuần tự cả 20 module theo đúng thứ tự
+    phụ thuộc nhờ \path{<modules>} khai báo trong \path{pom.xml} gốc).
+    \item \textbf{Build image và khởi động toàn bộ hệ thống:}
+    \begin{quote}\path{docker compose up -d --build}\end{quote}
+    \item Chờ khoảng 1--2 phút để PostgreSQL/MongoDB/Kafka/MinIO/Eureka khởi
+    động xong trước khi các business service đăng ký thành công vào Eureka —
+    kiểm tra tại \path{http://localhost:8761}. Nếu gọi API ngay trong lúc
+    service đích chưa đăng ký xong, gateway trả về \path{503 Service
+    Unavailable}.
+\end{enumerate}
+
+Trong quá trình phát triển, có thể chỉ chạy hạ tầng bằng Docker Compose
+(\path{docker compose up postgres mongodb redis kafka minio -d}) rồi chạy
+từng service bằng \path{mvn spring-boot:run} ngay trên máy, theo thứ tự:
+\path{eureka-server} $\to$ \path{config-server} $\to$ các business service
+$\to$ \path{api-gateway}.
+
+\section{Cấu hình môi trường}
+
+Các tham số vận hành quan trọng (địa chỉ Eureka/Config Server, khoá bí mật
+JWT, ngưỡng rate limit, allowlist quản trị viên, tỉ lệ sampling tracing...)
+đều được truyền qua biến môi trường thay vì hard-code trong image — cho phép
+đổi cấu hình theo môi trường (dev/staging/production) mà không cần build lại.
+Danh sách đầy đủ: xem Phụ lục~\ref{ap:env}.
+
+% ============================================================
+\chapter{Giao diện người dùng (Frontend)}
+% ============================================================
+
+Frontend được xây dựng bằng \textbf{Flutter Web} (module \path{frontend/},
+build trong Docker bằng image \path{ghcr.io/cirruslabs/flutter:stable} vì máy
+build không nhất thiết phải cài sẵn Flutter SDK, kết quả build tĩnh được phục
+vụ qua Nginx ở cổng 3001), gọi thẳng vào API Gateway thật — không dùng dữ liệu
+giả (mock).
+
+Bố cục dọc kiểu Facebook, đã hiện thực đủ giao diện cho toàn bộ 16 business
+service:
+
+\begin{itemize}[nosep]
+    \item Đăng ký / đăng nhập.
+    \item Bảng tin (feed), đăng bài (kèm chia sẻ/gắn thẻ/quyền riêng tư tuỳ
+    biến), bình luận (kèm trả lời), thả cảm xúc.
+    \item Trang cá nhân (profile), kết bạn, theo dõi.
+    \item Tìm kiếm tổng hợp, có trang kết quả riêng.
+    \item Group, Fanpage.
+    \item Story, Reels.
+    \item Dating (vuốt/ghép đôi).
+    \item Chat thời gian thực (STOMP/WebSocket), Notification thời gian thực
+    (STOMP/WebSocket).
+    \item Trang quản trị Moderation (chỉ hiển thị khi tài khoản có role
+    \path{ADMIN}).
+\end{itemize}
+
+Frontend chưa được kiểm thử bằng trình duyệt thật và chưa kiểm thử round-trip
+WebSocket thật ở thời điểm viết tài liệu này — xem thêm chi tiết trạng thái
+từng phần trong \path{TODO.md} ở thư mục gốc dự án.
+
+% ============================================================
+\chapter{Hạn chế và hướng phát triển}
+\label{ch:limitations}
+% ============================================================
+
+\section{Đơn giản hoá có chủ đích}
+
+Một vài điểm đơn giản hoá được ghi nhận rõ ràng trong mã nguồn (bằng comment),
+không phải thiếu sót ngoài ý muốn:
+
+\begin{itemize}[nosep]
+    \item \textbf{reaction-service / comment-service} nhận \path{targetOwnerId}
+    trực tiếp từ client thay vì tự tra cứu qua Feign — tránh phải duy trì 3
+    Feign client (sang post-service/comment-service/reels-service) chỉ để lấy
+    một trường. Đánh đổi: tin tưởng dữ liệu client gửi lên là đúng.
+    \item \textbf{fanpage-service} không có khái niệm "trang riêng tư" — đây
+    là quyết định thiết kế có chủ đích (đúng theo hành vi Facebook thật: fanpage
+    luôn công khai), không phải thiếu sót cần bổ sung như group-service.
+    \item \textbf{Frontend} gọi thẳng API thật nhưng chưa được kiểm thử bằng
+    trình duyệt/thiết bị thật, đặc biệt luồng WebSocket (chat, notification).
+\end{itemize}
+
+\section{Hướng phát triển tiếp theo}
+
+\begin{itemize}[nosep]
+    \item Bổ sung tầng cache (ví dụ Redis cache-aside) cho các API đọc nhiều
+    (hồ sơ người dùng, chi tiết bài viết) để giảm tải PostgreSQL.
+    \item Kiểm thử round-trip WebSocket thật (chat, notification) trên nhiều
+    trình duyệt/thiết bị.
+    \item Viết ứng dụng di động (Flutter mobile) tái sử dụng cùng bộ API REST
+    + WebSocket đã có, không cần đổi backend.
+    \item Chuyển sampling tracing về mức thấp hơn (ví dụ 10\%) và bổ sung
+    alerting (Grafana Alerting / Alertmanager) dựa trên các dashboard metrics
+    đã có sẵn khi triển khai môi trường thật.
+    \item Cân nhắc thay thế bộ lọc từ ngữ thô tục dạng danh sách tĩnh bằng mô
+    hình phân loại nội dung có khả năng học (machine learning) khi khối lượng
+    nội dung đủ lớn.
+\end{itemize}
+
+% ============================================================
+\appendix
+\chapter{Phụ lục}
+% ============================================================
+
+\section{Bảng biến môi trường chính}
+\label{ap:env}
+
+\begin{longtable}{p{4.5cm}p{4cm}p{5cm}}
+\threecolTableHeader{Bảng biến môi trường}{Biến}{Mặc định}{Áp dụng cho}
+\path{EUREKA_URI} & \path{http://eureka-server:8761/eureka/} & Mọi service (trừ eureka-server). \\
+\path{CONFIG_SERVER_URI} & \path{http://config-server:8888} & Mọi service dùng Config Server. \\
+\path{KAFKA_BOOTSTRAP_SERVERS} & \path{kafka:9092} & Mọi service có sản xuất/tiêu thụ sự kiện Kafka. \\
+\path{REDIS_HOST} / \path{REDIS_PORT} & \path{redis} / \path{6379} & api-gateway, feed-service, chat-service. \\
+\path{JWT_SECRET} & (đặt trong \path{docker-compose.yml}, cần đổi khi triển khai thật) & auth-service, api-gateway. \\
+\path{JWT_ACCESS_EXPIRATION_MS} & \path{900000} (15 phút) & api-gateway. \\
+\path{JWT_REFRESH_EXPIRATION_MS} & \path{604800000} (7 ngày) & api-gateway. \\
+\path{ZIPKIN_ENDPOINT} & \path{http://zipkin:9411/api/v2/spans} & Mọi service. \\
+\path{TRACING_SAMPLING_PROBABILITY} & \path{1.0} (100\%) & Mọi service — hạ xuống khi triển khai thật. \\
+\path{ADMIN_EMAILS} & \path{admin@social.app} & auth-service — allowlist tự gán role \path{ADMIN} lúc đăng ký. \\
+\path{RATE_LIMIT_REPLENISH} / \path{RATE_LIMIT_BURST} & \path{50} / \path{100} & api-gateway — hầu hết route nghiệp vụ. \\
+\path{RATE_LIMIT_AUTH_REPLENISH} / \path{RATE_LIMIT_AUTH_BURST} & \path{1} / \path{5} & api-gateway — riêng route \path{/api/auth/**}. \\
+\path{RATE_LIMIT_WS_REPLENISH} / \path{RATE_LIMIT_WS_BURST} & \path{5} / \path{10} & api-gateway — hai route WebSocket. \\
+\path{MINIO_ENDPOINT}, \path{MINIO_ACCESS_KEY}, \path{MINIO_SECRET_KEY} & \path{http://minio:9000}, \path{minioadmin}, \path{minioadmin} & media-service. \\
+\path{DB_HOST} / \path{DB_PORT} & \path{postgres} / \path{5432} & Mọi service dùng PostgreSQL. \\
+\path{MONGO_HOST} / \path{MONGO_PORT} & \path{mongodb} / \path{27017} & Mọi service dùng MongoDB. \\
+\end{longtable}
+
+\section{Danh sách 20 module Maven}
+
+\begin{longtable}{p{6cm}p{7.5cm}}
+\twocolTableHeader{Bảng module Maven}{Module}{Vai trò}
+\path{common/common-lib} & Thư viện dùng chung: DTO, enum, tiện ích bảo mật (\path{JwtTokenProvider}) dùng lại ở nhiều service. \\
+\path{infra/eureka-server} & Service discovery. \\
+\path{infra/config-server} & Cấu hình tập trung. \\
+\path{infra/api-gateway} & Cổng vào, xác thực, định tuyến, rate limit. \\
+\path{services/auth-service} & Xác thực, phát hành JWT. \\
+\path{services/user-service} & Hồ sơ, quan hệ xã hội. \\
+\path{services/media-service} & Lưu trữ media. \\
+\path{services/post-service} & Bài viết. \\
+\path{services/comment-service} & Bình luận. \\
+\path{services/reaction-service} & Cảm xúc, mục đã lưu. \\
+\path{services/story-service} & Story. \\
+\path{services/reels-service} & Reels. \\
+\path{services/group-service} & Nhóm. \\
+\path{services/fanpage-service} & Trang. \\
+\path{services/dating-service} & Hẹn hò. \\
+\path{services/chat-service} & Nhắn tin thời gian thực. \\
+\path{services/notification-service} & Thông báo thời gian thực. \\
+\path{services/feed-service} & Bảng tin. \\
+\path{services/moderation-service} & Kiểm duyệt nội dung. \\
+\path{services/search-service} & Tìm kiếm tổng hợp. \\
+\end{longtable}
+
+\end{document}
+

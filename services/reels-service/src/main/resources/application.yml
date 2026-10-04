@@ -46,3 +46,13 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+---
+# MongoDB Atlas - bật bằng SPRING_PROFILES_ACTIVE có "atlas" (xem .env.example)
+spring:
+  config:
+    activate:
+      on-profile: atlas
+  data:
+    mongodb:
+      uri: ${MONGO_ATLAS_BASE_URI}/reels_db?retryWrites=true&w=majority

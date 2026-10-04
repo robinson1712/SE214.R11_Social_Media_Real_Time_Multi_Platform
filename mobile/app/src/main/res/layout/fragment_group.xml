@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="16dp">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="170dp"
+            android:background="@drawable/scene_room" />
+
+        <!-- Header card overlapping the cover -->
+        <LinearLayout
+            style="@style/Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="-48dp"
+            android:layout_marginEnd="12dp"
+            android:elevation="2dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Tag"
+                    android:drawableStart="@drawable/ic_public"
+                    android:drawablePadding="4dp"
+                    android:drawableTint="@color/primary"
+                    android:gravity="center_vertical"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"
+                    android:text="Nhóm Công khai" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <ImageView
+                    android:id="@+id/group_search"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_circle_alt"
+                    android:contentDescription="Tìm trong nhóm"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_search"
+                    android:tint="@color/text_primary" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Text.H2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Cộng đồng Yêu Thiết Kế &amp; Lối Sống Tối Giản" />
+
+            <TextView
+                android:id="@+id/group_members"
+                style="@style/Text.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="18.2K thành viên  •  12 bạn bè tham gia" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/group_member_avatars"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+
+                <TextView
+                    style="@style/Tag"
+                    android:layout_marginStart="8dp"
+                    android:text="Admin: Linh Đan" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/group_see_all"
+                    style="@style/Text.Link"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:drawableTint="@color/primary"
+                    android:gravity="center_vertical"
+                    android:text="Xem tất cả" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="14dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/group_joined"
+                    style="@style/Widget.Aura.Button.Soft"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.2"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:text="Đã tham gia"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_check"
+                    app:iconPadding="4dp"
+                    app:iconSize="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/group_invite"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1.1"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:text="Mời bạn"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_person_add"
+                    app:iconPadding="4dp"
+                    app:iconSize="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/group_share"
+                    style="@style/Widget.Aura.Button.Soft"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:text="Chia sẻ"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_share"
+                    app:iconPadding="4dp"
+                    app:iconSize="16dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:clipToPadding="false"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/group_tabs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Pill"
+                    android:drawableStart="@drawable/ic_sparkle"
+                    android:text="Nội dung nổi bật" />
+
+                <TextView
+                    style="@style/Pill"
+                    android:drawableStart="@drawable/ic_comment"
+                    android:text="Chủ đề trao đổi" />
+
+                <TextView
+                    style="@style/Pill"
+                    android:drawableStart="@drawable/ic_event"
+                    android:text="Sự kiện" />
+
+                <TextView
+                    style="@style/Pill"
+                    android:drawableStart="@drawable/ic_image"
+                    android:text="File phương tiện" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Composer -->
+        <LinearLayout
+            style="@style/Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginEnd="12dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.example.ui_mobile.ui.AvatarView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="Nguyễn Nhật Minh" />
+
+                <TextView
+                    android:id="@+id/group_composer"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_pill"
+                    android:ellipsize="end"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="Chia sẻ góc làm việc hoặc ý tưởng của bạn..."
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/PostAction"
+                    android:drawableStart="@drawable/ic_image"
+                    android:drawableTint="@color/primary"
+                    android:text="Ảnh/Video" />
+
+                <TextView
+                    style="@style/PostAction"
+                    android:drawableStart="@drawable/ic_lightbulb"
+                    android:drawableTint="@color/primary"
+                    android:text="Mẹo hay" />
+
+                <TextView
+                    style="@style/PostAction"
+                    android:drawableStart="@drawable/ic_poll"
+                    android:drawableTint="@color/primary"
+                    android:text="Khảo sát" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Weekly topic -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_card_lavender"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="14dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_pin"
+                android:tint="@color/primary" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Chủ đề tuần này: Góc làm việc chữa lành"
+                    android:textColor="@color/primary"
+                    android:textSize="14sp" />
+
+                <TextView
+                    style="@style/Text.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Cùng chia sẻ góc tĩnh lặng giúp bạn tập trung mỗi ngày"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/group_posts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginEnd="12dp"
+            android:orientation="vertical" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="14dp"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_square_lavender"
+            android:contentDescription="@null"
+            android:padding="10dp"
+            android:src="@drawable/ic_spa"
+            android:tint="@color/primary" />
+
+        <LinearLayout
+            android:id="@+id/poll_group"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/Text.Title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Sống Cân Bằng • Mindful Living" />
+
+                <TextView
+                    style="@style/Tag"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_pill"
+                    android:text="Cộng đồng"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Text.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Được khởi tạo bởi Mai Phương • 4 giờ trước" />
+        </LinearLayout>
+
+        <ImageView
+            style="@style/IconButton"
+            android:contentDescription="Tùy chọn"
+            android:src="@drawable/ic_more_horiz"
+            android:tint="@color/text_secondary" />
+    </LinearLayout>
+
+    <TextView
+        style="@style/Text.H3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="Cách bạn sạc lại năng lượng sau giờ làm việc?"
+        android:textSize="19sp" />
+
+    <TextView
+        style="@style/Text.Secondary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Hãy cùng chọn nhịp sống giúp bạn thấy thư thái nhất vào buổi tối hôm nay nhé." />
+
+    <!-- Option A -->
+    <FrameLayout
+        android:id="@+id/poll_option_a"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_box">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <View
+                android:id="@+id/poll_fill_a"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="64"
+                android:background="@drawable/bg_box_lavender" />
+
+            <View
+                android:id="@+id/poll_rest_a"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="36" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="16dp">
+
+            <ImageView
+                android:id="@+id/poll_check_a"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/poll_text_a"
+                style="@style/Text.Title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Đọc sách &amp; Thiền định tĩnh tại"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/poll_percent_a"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/primary"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Option B -->
+    <FrameLayout
+        android:id="@+id/poll_option_b"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_box">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <View
+                android:id="@+id/poll_fill_b"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="36"
+                android:background="@drawable/bg_box_lavender" />
+
+            <View
+                android:id="@+id/poll_rest_b"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="64" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="16dp">
+
+            <ImageView
+                android:id="@+id/poll_check_b"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/poll_text_b"
+                style="@style/Text.Title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Dạo phố, ngắm hoàng hôn &amp; Cà phê"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/poll_percent_b"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/poll_votes"
+            style="@style/Text.Caption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            style="@style/Text.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/ic_schedule"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/primary"
+            android:gravity="center_vertical"
+            android:text="Còn 18 giờ để thảo luận"
+            android:textColor="@color/primary" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_box"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <com.example.ui_mobile.ui.AvatarView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:text="Linh Đan" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="Linh Đan"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:lineSpacingMultiplier="1.2"
+                android:text="&quot;Mình thích pha một ấm trà hoa cúc, tắt hết chuông thông báo và đọc 20 trang sách trước khi ngủ. Cảm giác nhẹ bẫng!&quot;"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/poll_like"
+            style="@style/PostAction"
+            android:drawableStart="@drawable/ic_heart_outline"
+            android:text="49" />
+
+        <TextView
+            style="@style/PostAction"
+            android:drawableStart="@drawable/ic_comment"
+            android:text="53 phản hồi" />
+
+        <TextView
+            android:id="@+id/poll_share"
+            style="@style/PostAction"
+            android:drawableStart="@drawable/ic_share"
+            android:text="Chia sẻ" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,11 @@
+# Android / Gradle
+.gradle/
+build/
+/local.properties
+/captures
+.externalNativeBuild
+.cxx
+.kotlin/
+
+# Root .gitignore ignores *.jar — the wrapper jar must be committed
+!gradle/wrapper/gradle-wrapper.jar

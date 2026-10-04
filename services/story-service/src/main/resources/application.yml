@@ -73,3 +73,13 @@ resilience4j:
     instances:
       user-service:
         base-config: default
+
+---
+# MongoDB Atlas - bật bằng SPRING_PROFILES_ACTIVE có "atlas" (xem .env.example)
+spring:
+  config:
+    activate:
+      on-profile: atlas
+  data:
+    mongodb:
+      uri: ${MONGO_ATLAS_BASE_URI}/story_db?retryWrites=true&w=majority

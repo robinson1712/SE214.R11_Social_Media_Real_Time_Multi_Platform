@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/page_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_top_bar"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="6dp">
+
+        <ImageView
+            android:id="@+id/page_back"
+            style="@style/IconButton"
+            android:contentDescription="Quay lại"
+            android:src="@drawable/ic_arrow_back" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill"
+            android:drawableStart="@drawable/ic_search"
+            android:drawablePadding="8dp"
+            android:drawableTint="@color/text_secondary"
+            android:gravity="center_vertical"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Tìm trong trang..."
+            android:textColor="@color/text_tertiary"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:id="@+id/page_share_top"
+            style="@style/IconButton"
+            android:layout_marginStart="4dp"
+            android:contentDescription="Chia sẻ trang"
+            android:src="@drawable/ic_share" />
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="20dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="190dp">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/scene_coffee" />
+
+                <TextView
+                    style="@style/Pill.White"
+                    android:layout_height="30dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="12dp"
+                    android:text="●  Không gian mở cửa đón khách"
+                    android:textColor="@color/primary"
+                    android:textSize="11sp" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="-48dp"
+                android:gravity="bottom"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <FrameLayout
+                    android:layout_width="100dp"
+                    android:layout_height="100dp">
+
+                    <com.example.ui_mobile.ui.AvatarView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="Gốm &amp; Không Gian Tĩnh Tại"
+                        app:avatarRing="true" />
+
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="bottom|end"
+                        android:layout_margin="2dp"
+                        android:background="@drawable/bg_badge"
+                        android:contentDescription="Trang đã xác minh"
+                        android:padding="5dp"
+                        android:src="@drawable/ic_check"
+                        android:tint="@color/white" />
+                </FrameLayout>
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    style="@style/Pill.White"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="0dp"
+                    android:layout_marginBottom="6dp"
+                    android:drawableStart="@drawable/ic_star"
+                    android:drawableTint="#F2B35C"
+                    android:text="4.9  (186 review)"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Text.H1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="Gốm &amp; Không Gian Tĩnh Tại"
+                android:textSize="25sp" />
+
+            <TextView
+                style="@style/Text.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="\@gom.tinhtai.studio  •  Trang chính thức"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/page_stats"
+                style="@style/Text.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="14dp"
+                android:layout_marginEnd="12dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/page_follow"
+                    style="@style/Widget.Aura.Button.Soft"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.25"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:textSize="13sp"
+                    app:iconPadding="4dp"
+                    app:iconSize="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/page_message"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:text="Nhắn tin"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_send"
+                    app:iconPadding="4dp"
+                    app:iconSize="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/page_book"
+                    style="@style/Widget.Aura.Button.Outline"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:text="Đặt lịch"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_event"
+                    app:iconPadding="4dp"
+                    app:iconSize="16dp" />
+            </LinearLayout>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:clipToPadding="false"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/page_tabs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/Pill"
+                        android:text="Trang chủ" />
+
+                    <TextView
+                        style="@style/Pill"
+                        android:text="Bài viết" />
+
+                    <TextView
+                        style="@style/Pill"
+                        android:text="Đánh giá" />
+
+                    <TextView
+                        style="@style/Pill"
+                        android:text="Ảnh &amp; Sản phẩm" />
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- About -->
+            <LinearLayout
+                style="@style/Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="14dp"
+                android:layout_marginEnd="12dp"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/Text.H3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Giới thiệu không gian" />
+
+                    <TextView
+                        android:id="@+id/page_about_more"
+                        style="@style/Text.Link"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableEnd="@drawable/ic_chevron_right"
+                        android:drawableTint="@color/primary"
+                        android:gravity="center_vertical"
+                        android:text="Xem chi tiết" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/page_about"
+                    style="@style/Text.Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:ellipsize="end"
+                    android:maxLines="3"
+                    android:text="Xưởng gốm thủ công mộc mạc và trà thất tĩnh tâm. Nơi tôn vinh vẻ đẹp bất toàn (Wabi-sabi), lưu giữ nghệ thuật đất sét nung tự nhiên và nuôi dưỡng những phút giây hiện hữu thư thái giữa lòng phố thị. Mỗi tuần xưởng mở hai buổi workshop nặn gốm cho người mới bắt đầu."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+
+                <TextView
+                    style="@style/Text.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:drawableStart="@drawable/ic_place"
+                    android:drawablePadding="10dp"
+                    android:drawableTint="@color/primary"
+                    android:text="24/6 Phùng Khắc Khoan, P. Đa Kao, Quận 1, TP. Hồ Chí Minh" />
+
+                <TextView
+                    android:id="@+id/page_hours"
+                    style="@style/Text.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:drawableStart="@drawable/ic_schedule"
+                    android:drawablePadding="10dp"
+                    android:drawableTint="@color/primary" />
+
+                <TextView
+                    style="@style/Text.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:drawableStart="@drawable/ic_public"
+                    android:drawablePadding="10dp"
+                    android:drawableTint="@color/primary"
+                    android:text="https://gomtinhtai.aura.space"
+                    android:textColor="@color/primary" />
+
+                <TextView
+                    style="@style/Text.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:drawableStart="@drawable/ic_leaf"
+                    android:drawablePadding="10dp"
+                    android:drawableTint="@color/primary"
+                    android:text="100% Đất sét tự nhiên • Men tro cổ truyền" />
+            </LinearLayout>
+
+            <!-- Collections -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    style="@style/Text.H3"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Bộ sưu tập &amp; Góc xưởng" />
+
+                <TextView
+                    style="@style/Text.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Kéo để xem thêm" />
+            </LinearLayout>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:clipToPadding="false"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/page_collections"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <LinearLayout
+                android:id="@+id/page_posts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="12dp"
+                android:orientation="vertical" />
+
+            <!-- Related group -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/bg_card_lavender"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp">
+
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_circle_white"
+                    android:contentDescription="@null"
+                    android:padding="11dp"
+                    android:src="@drawable/ic_spa"
+                    android:tint="@color/primary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Text.Title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nhóm 'Trà &amp; Gốm Tĩnh Lặng'"
+                        android:textColor="@color/primary" />
+
+                    <TextView
+                        style="@style/Text.Caption"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="14.2K thành viên chia sẻ nghệ thuật sống"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/page_join_group"
+                    style="@style/Widget.Aura.Button.Pill"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="Tham gia"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

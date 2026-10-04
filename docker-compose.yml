@@ -16,6 +16,15 @@ x-app-env: &app-env
   # raised to give normal page loads headroom instead of 429ing routine usage.
   RATE_LIMIT_REPLENISH: 50
   RATE_LIMIT_BURST: 100
+  # Cloud database (see .env.example). Leave SPRING_PROFILES_ACTIVE unset to use
+  # the local postgres container; set it to "supabase" in .env to use Supabase.
+  SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
+  SUPABASE_DB_HOST: ${SUPABASE_DB_HOST:-}
+  SUPABASE_DB_PORT: ${SUPABASE_DB_PORT:-6543}
+  SUPABASE_DB_USER: ${SUPABASE_DB_USER:-}
+  SUPABASE_DB_PASSWORD: ${SUPABASE_DB_PASSWORD:-}
+  SUPABASE_DB_POOL_SIZE: ${SUPABASE_DB_POOL_SIZE:-3}
+  MONGO_ATLAS_BASE_URI: ${MONGO_ATLAS_BASE_URI:-}
 
 services:
   # ---------- Infrastructure ----------
@@ -76,7 +85,8 @@ services:
       - kafka_data:/var/lib/kafka/data
 
   minio:
-    image: minio/minio:latest
+    # minio/minio was pulled from Docker Hub; MinIO now only publishes to quay.io.
+    image: quay.io/minio/minio:latest
     container_name: sma-minio
     command: server /data --console-address ":9001"
     environment:
@@ -154,6 +164,7 @@ services:
     container_name: sma-config-server
     environment:
       <<: *app-env
+      SPRING_PROFILES_ACTIVE: native
       CONFIG_REPO_PATH: /config-repo
     volumes:
       - ./config-repo:/config-repo

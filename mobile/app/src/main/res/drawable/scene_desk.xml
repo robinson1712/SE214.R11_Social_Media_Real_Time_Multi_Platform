@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#F4F1EC"
+                android:centerColor="#E0D9CE"
+                android:endColor="#BDB3A4" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/scene_window" />
+</layer-list>
