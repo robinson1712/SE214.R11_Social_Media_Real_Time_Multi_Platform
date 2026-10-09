@@ -37,6 +37,3 @@ replay_pid*
 # OS noise
 .DS_Store
 Thumbs.db
-
-# Local secrets (copy from .env.example)
-.env

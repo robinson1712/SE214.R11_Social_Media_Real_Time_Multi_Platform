@@ -53,28 +53,3 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
-
----
-# Supabase (cloud Postgres) - enabled with SPRING_PROFILES_ACTIVE=supabase.
-# Supabase provides a single "postgres" database, so this service keeps its
-# tables in its own schema (dating_db) instead of a separate database.
-# Connects through the Supavisor transaction pooler (IPv4-friendly), which
-# does not support server-side prepared statements -> prepareThreshold=0.
-spring:
-  config:
-    activate:
-      on-profile: supabase
-  datasource:
-    url: jdbc:postgresql://${SUPABASE_DB_HOST}:${SUPABASE_DB_PORT:6543}/postgres?sslmode=require&prepareThreshold=0
-    username: ${SUPABASE_DB_USER}
-    password: ${SUPABASE_DB_PASSWORD}
-    hikari:
-      # 10 services share the free-tier connection budget.
-      maximum-pool-size: ${SUPABASE_DB_POOL_SIZE:3}
-      minimum-idle: 1
-  jpa:
-    properties:
-      hibernate:
-        default_schema: dating_db
-        hbm2ddl:
-          create_namespaces: true
