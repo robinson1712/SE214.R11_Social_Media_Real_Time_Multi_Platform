@@ -1,6 +1,6 @@
 # Kiểm tra bàn giao repo nhóm — 10/10/2026
 
-**Kết luận: CHƯA ĐỦ ĐIỀU KIỆN MERGE vào main.** Bản tích hợp riêng đã build và test thành công trong phạm vi bên dưới; credential lịch sử, advisory dependency và quyền đọc media còn cần xử lý. Không push, tạo PR, merge hoặc deploy trong phiên kiểm tra này.
+**Kết luận: CHƯA ĐỦ ĐIỀU KIỆN MERGE vào main.** Bản tích hợp riêng đã build và test thành công trong phạm vi bên dưới; credential lịch sử, advisory dependency và quyền đọc media còn cần xử lý. Phiên audit chỉ tạo bản tích hợp local. Sau audit, chủ project đã cho phép push riêng `codex/team-handoff-audit` để nhóm review; không merge main hoặc deploy. Xem [hướng dẫn lấy source và đối chiếu React](TEAM_REVIEW_VI.md).
 
 ## 1. Git và bản tích hợp
 
