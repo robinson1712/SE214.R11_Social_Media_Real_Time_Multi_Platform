@@ -1,6 +1,6 @@
-/// Shared enums mirroring the Java enums in common-lib / per-service entities.
-/// Backend sends/expects the plain uppercase enum name as a JSON string
-/// (Jackson's default `@Enumerated(EnumType.STRING)` / record serialization).
+// Shared enums mirroring the Java enums in common-lib / per-service entities.
+// Backend sends/expects the plain uppercase enum name as a JSON string
+// (Jackson's default `@Enumerated(EnumType.STRING)` / record serialization).
 
 enum Privacy { public, friends, custom, private }
 

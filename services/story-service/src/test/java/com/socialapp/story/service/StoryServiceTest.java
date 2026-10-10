@@ -197,6 +197,7 @@ class StoryServiceTest {
 
     @Test
     void getStoriesByAuthor_delegatesToRepository() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
         Story story = existingStory("story-1", "author-1");
         when(storyRepository.findByAuthorIdAndExpiresAtAfterOrderByCreatedAtDesc(eq("author-1"), any(Instant.class)))
                 .thenReturn(List.of(story));
@@ -208,6 +209,7 @@ class StoryServiceTest {
 
     @Test
     void markViewed_addsCurrentUserToViewerIds() {
+        when(userServiceClient.getFriendIds("author-1")).thenReturn(List.of("viewer-1"));
         CurrentUserContext.setForTests("viewer-1", List.of("USER"));
         Story story = existingStory("story-1", "author-1");
         when(storyRepository.findById("story-1")).thenReturn(Optional.of(story));
@@ -221,6 +223,7 @@ class StoryServiceTest {
 
     @Test
     void markViewed_sameViewerTwice_doesNotDuplicateInViewerIdsSet() {
+        when(userServiceClient.getFriendIds("author-1")).thenReturn(List.of("viewer-1"));
         CurrentUserContext.setForTests("viewer-1", List.of("USER"));
         Story story = existingStory("story-1", "author-1");
         Set<String> viewerIds = new HashSet<>();
@@ -243,6 +246,52 @@ class StoryServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
 
         verify(storyRepository, never()).save(any());
+    }
+
+    @Test
+    void getStoriesByAuthor_strangerCannotRead() {
+        CurrentUserContext.setForTests("stranger", List.of("USER"));
+        when(userServiceClient.getFriendIds("author-1")).thenReturn(null);
+        assertThatThrownBy(() -> storyService.getStoriesByAuthor("author-1"))
+                .isInstanceOf(ForbiddenException.class);
+        verify(storyRepository, never()).findByAuthorIdAndExpiresAtAfterOrderByCreatedAtDesc(any(), any());
+    }
+
+    @Test
+    void getStoriesByAuthor_friendCanRead() {
+        CurrentUserContext.setForTests("friend", List.of("USER"));
+        when(userServiceClient.getFriendIds("author-1")).thenReturn(List.of("friend"));
+        when(storyRepository.findByAuthorIdAndExpiresAtAfterOrderByCreatedAtDesc(eq("author-1"), any()))
+                .thenReturn(List.of(existingStory("story-1", "author-1")));
+        assertThat(storyService.getStoriesByAuthor("author-1")).hasSize(1);
+    }
+
+    @Test
+    void markViewed_strangerCannotReadOrMutate() {
+        CurrentUserContext.setForTests("stranger", List.of("USER"));
+        Story story = existingStory("story-1", "author-1");
+        when(storyRepository.findById("story-1")).thenReturn(Optional.of(story));
+        when(userServiceClient.getFriendIds("author-1")).thenReturn(List.of());
+        assertThatThrownBy(() -> storyService.markViewed("story-1")).isInstanceOf(ForbiddenException.class);
+        assertThat(story.getViewerIds()).isEmpty();
+        verify(storyRepository, never()).save(any());
+    }
+
+    @Test
+    void markViewed_expiredStoryCannotBeReadEvenByOwner() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        Story story = existingStory("story-1", "author-1");
+        story.setExpiresAt(Instant.now().minusSeconds(1));
+        when(storyRepository.findById("story-1")).thenReturn(Optional.of(story));
+        assertThatThrownBy(() -> storyService.markViewed("story-1")).isInstanceOf(ResourceNotFoundException.class);
+        verify(storyRepository, never()).save(any());
+    }
+
+    @Test
+    void commentAccess_nullFriendResponseDeniesAccess() {
+        when(storyRepository.findById("story-1")).thenReturn(Optional.of(existingStory("story-1", "author-1")));
+        when(userServiceClient.getFriendIds("author-1")).thenReturn(null);
+        assertThat(storyService.commentAccess("story-1", "stranger").accessible()).isFalse();
     }
 
     @Test

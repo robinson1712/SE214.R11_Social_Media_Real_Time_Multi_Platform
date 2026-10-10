@@ -1,6 +1,6 @@
 package com.socialapp.auth.service;
 
-import com.socialapp.auth.config.AdminEmailAllowlist;
+import com.socialapp.auth.config.AdminBootstrapToken;
 import com.socialapp.auth.dto.AccessTokenResponse;
 import com.socialapp.auth.dto.AccountResponse;
 import com.socialapp.auth.dto.AuthResponse;
@@ -22,7 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -62,21 +61,16 @@ class AuthServiceTest {
     private JwtTokenProvider jwtTokenProvider;
 
     private KafkaTemplate<String, Object> kafkaTemplate;
-    private AdminEmailAllowlist adminEmailAllowlist;
-
-    @InjectMocks
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         // KafkaTemplate has no no-arg constructor Mockito can proxy cleanly via
-        // @Mock in every environment, so build it explicitly and hand it to the
-        // service — @InjectMocks still wires the @Mock fields above by type.
+        // @Mock in every environment, so build it explicitly and hand it to the service.
         kafkaTemplate = mock(KafkaTemplate.class);
-        // Real instance (not a mock) — it's a plain value object once constructed,
-        // cheaper and clearer to just build it with the allowlist a given test needs.
-        adminEmailAllowlist = new AdminEmailAllowlist("admin@social.app, root@social.app");
-        authService = new AuthService(accountRepository, refreshTokenRepository, passwordEncoder, jwtTokenProvider, kafkaTemplate, adminEmailAllowlist);
+        AdminBootstrapToken adminBootstrapToken = new AdminBootstrapToken("test-bootstrap-token-value-with-32-bytes-or-more");
+        authService = new AuthService(accountRepository, refreshTokenRepository, passwordEncoder,
+                jwtTokenProvider, kafkaTemplate, adminBootstrapToken);
     }
 
     private Account activeAccount(String id, String email, String hash) {
@@ -123,26 +117,9 @@ class AuthServiceTest {
     }
 
     @Test
-    void register_emailOnAdminAllowlist_grantsAdminRoleInAdditionToUser() {
+    void register_emailThatUsedToBeAllowlisted_getsUserRoleOnly() {
         RegisterRequest request = new RegisterRequest("admin@social.app", "P@ssw0rd", "Site Admin", null, null, null);
         when(accountRepository.existsByEmail("admin@social.app")).thenReturn(false);
-        when(passwordEncoder.encode("P@ssw0rd")).thenReturn("hashed");
-        when(accountRepository.save(any(Account.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(jwtTokenProvider.generateAccessToken(any(), anyList())).thenReturn("access-token");
-        when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("refresh-token");
-        when(jwtTokenProvider.getRefreshTokenExpirationMs()).thenReturn(604_800_000L);
-
-        authService.register(request);
-
-        ArgumentCaptor<Account> captor = ArgumentCaptor.forClass(Account.class);
-        verify(accountRepository).save(captor.capture());
-        assertThat(captor.getValue().getRoles()).containsExactlyInAnyOrder("USER", "ADMIN");
-    }
-
-    @Test
-    void register_emailNotOnAdminAllowlist_getsUserRoleOnly() {
-        RegisterRequest request = new RegisterRequest("nobody-special@social.app", "P@ssw0rd", "Regular User", null, null, null);
-        when(accountRepository.existsByEmail("nobody-special@social.app")).thenReturn(false);
         when(passwordEncoder.encode("P@ssw0rd")).thenReturn("hashed");
         when(accountRepository.save(any(Account.class))).thenAnswer(inv -> inv.getArgument(0));
         when(jwtTokenProvider.generateAccessToken(any(), anyList())).thenReturn("access-token");
@@ -226,6 +203,21 @@ class AuthServiceTest {
         AccessTokenResponse response = authService.refresh(new RefreshRequest("refresh-token"));
 
         assertThat(response.accessToken()).isEqualTo("new-access-token");
+    }
+
+    @Test
+    void refresh_bannedAccount_doesNotIssueAccessToken() {
+        RefreshToken tokenRow = RefreshToken.builder()
+                .accountId("acc-1").token("refresh-token")
+                .expiresAt(Instant.now().plusSeconds(3600)).revoked(false).build();
+        Account account = activeAccount("acc-1", "banned@social.app", "hashed");
+        account.setStatus(AccountStatus.BANNED);
+        when(refreshTokenRepository.findByToken("refresh-token")).thenReturn(Optional.of(tokenRow));
+        when(accountRepository.findById("acc-1")).thenReturn(Optional.of(account));
+
+        assertThatThrownBy(() -> authService.refresh(new RefreshRequest("refresh-token")))
+                .isInstanceOf(UnauthorizedException.class);
+        verify(jwtTokenProvider, never()).generateAccessToken(anyString(), anyList());
     }
 
     @Test

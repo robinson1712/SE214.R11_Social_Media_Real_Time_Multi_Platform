@@ -72,6 +72,31 @@ public class GroupService {
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found: " + id));
     }
 
+    /** Internal authorization query used by post-service before accepting a group post. */
+    public boolean canCreatePost(String groupId, String authorId) {
+        if (!groupRepository.existsById(groupId) || authorId == null || authorId.isBlank()) {
+            return false;
+        }
+        return groupMemberRepository.findByGroupIdAndUserId(groupId, authorId)
+                .filter(member -> member.getStatus() == MemberStatus.APPROVED)
+                .isPresent();
+    }
+
+    /** Visibility query shared with post-service at request time, not from feed fanout. */
+    public boolean canViewContent(String groupId, String viewerId) {
+        Group group = groupRepository.findById(groupId).orElse(null);
+        if (group == null) {
+            return false;
+        }
+        if (group.getPrivacy() == GroupPrivacy.PUBLIC) {
+            return true;
+        }
+        return viewerId != null && !viewerId.isBlank()
+                && groupMemberRepository.findByGroupIdAndUserId(groupId, viewerId)
+                .filter(member -> member.getStatus() == MemberStatus.APPROVED)
+                .isPresent();
+    }
+
     public Page<Group> listVisibleGroups(String name, Pageable pageable) {
         // Every PUBLIC group, plus any PRIVATE group the caller already has an
         // APPROVED membership in. CurrentUserContext.getUserId() may be null here

@@ -78,7 +78,7 @@ class _CreateGroupDialogState extends ConsumerState<_CreateGroupDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<GroupPrivacy>(
-                value: _privacy,
+                initialValue: _privacy,
                 decoration: const InputDecoration(labelText: 'Quyền riêng tư'),
                 items: GroupPrivacy.values
                     .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))

@@ -1,0 +1,158 @@
+{
+  "tests": 527,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 6,
+  "passed": 521,
+  "suites": 46,
+  "java_versions": [
+    "17.0.20.1"
+  ],
+  "module_counts": {
+    "common/common-lib": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "infra/api-gateway": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/auth-service": {
+      "tests": 32,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1
+    },
+    "services/chat-service": {
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/comment-service": {
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/dating-service": {
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/fanpage-service": {
+      "tests": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/feed-service": {
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/group-service": {
+      "tests": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5
+    },
+    "services/media-service": {
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/moderation-service": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/notification-service": {
+      "tests": 33,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/post-service": {
+      "tests": 54,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/reaction-service": {
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/reels-service": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/search-service": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/story-service": {
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "services/user-service": {
+      "tests": 84,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "skipped_cases": [
+    {
+      "suite": "TEST-com.socialapp.auth.service.AdminBootstrapPostgresTest.xml",
+      "test": "concurrentBootstrapCommitsExactlyOneAdminAndPublishesOnlyThatUser"
+    },
+    {
+      "suite": "TEST-com.socialapp.group.repository.GroupRepositoryIntegrationTest.xml",
+      "test": "findVisibleGroups_tableAndEntityNamesAreCorrect"
+    },
+    {
+      "suite": "TEST-com.socialapp.group.repository.GroupRepositoryIntegrationTest.xml",
+      "test": "findVisibleGroups_privateGroup_visibleOnlyToApprovedMember"
+    },
+    {
+      "suite": "TEST-com.socialapp.group.repository.GroupRepositoryIntegrationTest.xml",
+      "test": "findVisibleGroups_withNoFilters_doesNotThrowAndReturnsPublicGroup"
+    },
+    {
+      "suite": "TEST-com.socialapp.group.repository.GroupRepositoryIntegrationTest.xml",
+      "test": "findVisibleGroups_nameFilter_isCaseInsensitiveSubstringMatch"
+    },
+    {
+      "suite": "TEST-com.socialapp.group.repository.GroupRepositoryIntegrationTest.xml",
+      "test": "findVisibleGroups_privateGroup_notVisibleToPendingMember"
+    }
+  ],
+  "frontend_tests": 5,
+  "deployment_tests": 7,
+  "osv_packages": 440,
+  "osv_affected_packages": 53,
+  "osv_advisories": 182,
+  "osv_severity": {
+    "MODERATE": 78,
+    "LOW": 18,
+    "HIGH": 72,
+    "CRITICAL": 14
+  }
+}

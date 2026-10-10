@@ -1,6 +1,7 @@
 package com.socialapp.reaction.service;
 
 import com.socialapp.common.enums.TargetType;
+import com.socialapp.common.dto.ContentAccessResponse;
 import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.reaction.dto.SaveItemRequest;
@@ -22,6 +23,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,12 +39,16 @@ class SavedItemServiceTest {
 
     @Mock
     private SavedItemRepository savedItemRepository;
+    @Mock
+    private ReactionTargetAccessService targetAccessService;
 
     private SavedItemService savedItemService;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        savedItemService = new SavedItemService(savedItemRepository);
+        savedItemService = new SavedItemService(savedItemRepository, targetAccessService);
+        lenient().when(targetAccessService.requireReadable(any(), anyString(), any()))
+                .thenReturn(new ContentAccessResponse(true, true, "post-owner-1"));
     }
 
     @AfterEach
@@ -62,7 +69,7 @@ class SavedItemServiceTest {
     @Test
     void save_notAlreadySaved_createsNewRow() {
         CurrentUserContext.setForTests("user-1", List.of("USER"));
-        SaveItemRequest request = new SaveItemRequest(TargetType.POST, "post-1", "post-owner-1");
+        SaveItemRequest request = new SaveItemRequest(TargetType.POST, "post-1", "forged-owner");
         when(savedItemRepository.findByTargetTypeAndTargetIdAndUserId(TargetType.POST, "post-1", "user-1"))
                 .thenReturn(Optional.empty());
         when(savedItemRepository.save(any(SavedItem.class))).thenAnswer(inv -> inv.getArgument(0));

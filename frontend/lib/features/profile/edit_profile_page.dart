@@ -220,7 +220,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<Gender>(
-                value: _gender,
+                initialValue: _gender,
                 decoration: const InputDecoration(labelText: 'Giới tính'),
                 items: const [
                   DropdownMenuItem(value: Gender.male, child: Text('Nam')),

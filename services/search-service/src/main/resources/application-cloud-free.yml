@@ -1,0 +1,11 @@
+# Local safety defaults must not depend on the optional Config Server.
+spring:
+  config:
+    activate:
+      on-profile: cloud-free
+server:
+  address: 127.0.0.1
+eureka:
+  instance:
+    hostname: 127.0.0.1
+    prefer-ip-address: false

@@ -91,7 +91,7 @@ Build+test toàn reactor (`mvn clean install`, không `-DskipTests`): **18/18 mo
 | `eureka-server` | 8761 | ✅ Xong | — |
 | `config-server` | 8888 | ✅ Xong | Đang bị dùng ít — có thể đẩy thêm config dùng chung (vd. resilience4j defaults) sang đây |
 | `api-gateway` | 8080 | ✅ Xong + rate limit (kể cả route WebSocket) | — |
-| `auth-service` | 8081 | ✅ Xong + admin allowlist | Chưa có: reset mật khẩu, xác minh email, khoá tài khoản sau N lần login sai, OAuth2/social login |
+| `auth-service` | 8081 | 🟡 One-time admin bootstrap có source; runtime chưa xác minh | Chưa có: reset mật khẩu, xác minh email, khoá tài khoản sau N lần login sai, OAuth2/social login |
 | `user-service` | 8082 | ✅ Xong + tìm kiếm user | Chưa có: gợi ý bạn chung |
 | `media-service` | 8083 | ✅ Xong + whitelist content-type + giới hạn size theo purpose | Chưa có: resize ảnh/tạo thumbnail, transcode video |
 | `post-service` | 8084 | ✅ Xong + profanity filter + xoá theo report + ghim bài + share/tag/custom-audience + enforce privacy lúc đọc | Chưa có: lịch sử chỉnh sửa |
@@ -195,7 +195,10 @@ Ba lớp bổ sung nhau, không thay thế nhau:
   `targetType` (`"POST"`/`"COMMENT"`), gọi `removeForModeration(targetId)` — post-service xoá cứng,
   comment-service soft-delete (nhất quán với cách xoá thường của từng service). Đây là lần đầu
   comment-service có `@KafkaListener` (trước đó chỉ producer).
-- **Cấp quyền ADMIN lúc đăng ký** (`auth-service` → `AdminEmailAllowlist`): đọc danh sách email admin
+
+> Ghi chú: phần ADMIN lịch sử ngay dưới đây mô tả cơ chế email allowlist đã bị gỡ. Public registration
+> hiện chỉ tạo USER; first-admin bootstrap có source nhưng còn chờ xác nhận runtime ở AU-02.
+- **Lịch sử cấp quyền ADMIN lúc đăng ký (đã bị gỡ)** (`auth-service` → `AdminEmailAllowlist`): đọc danh sách email admin
   từ `ADMIN_EMAILS` (comma-separated, env var, mặc định rỗng) — email nào khớp allowlist được gán
   role `["USER","ADMIN"]` lúc `register()`, còn lại chỉ `["USER"]`. Đơn giản hoá có chủ đích cho đồ
   án (không cần UI quản trị cấp quyền riêng) — ghi rõ trong `application.yml` với comment giải thích.
@@ -207,11 +210,12 @@ gate ADMIN, resolveReport 2 nhánh DISMISS/REMOVE_CONTENT + verify đúng `Conte
 qua `ArgumentCaptor`, resolveReport report đã xử lý rồi → 409 Conflict).
 
 `docker-compose.yml`: thêm `moderation_db` vào `POSTGRES_MULTIPLE_DATABASES`, container
-`moderation-service` (port 8095), `ADMIN_EMAILS: admin@social.app` vào `x-app-env` dùng chung.
+`moderation-service` (port 8095); cơ chế legacy `ADMIN_EMAILS` đã bị gỡ và không cấp role nữa.
 `api-gateway`: thêm route `/api/moderation/**` → `MODERATION-SERVICE` (cùng rate-limit mặc định như
 các service khác).
 
-**Đã verify bằng luồng thật qua Docker + curl (không chỉ unit test mock)**, redeploy full 18 service:
+**Lịch sử verify bằng luồng thật qua Docker + curl trước khi gỡ email allowlist**; kết quả dưới đây
+không xác minh cơ chế bootstrap hiện tại. Redeploy full 18 service khi đó:
 1. Đăng ký `admin@social.app` (nằm trong `ADMIN_EMAILS`) → token JWT có đúng `"roles":["USER","ADMIN"]`; đăng ký email thường → chỉ `["USER"]`.
 2. `POST /api/posts` với nội dung tục ("...fucking...") → **400 "Content violates community guidelines"**, không tạo được.
 3. Tạo post sạch, user thường report qua `POST /api/moderation/reports` → 200, status `PENDING`.

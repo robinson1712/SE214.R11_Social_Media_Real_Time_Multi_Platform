@@ -18,6 +18,7 @@
 
     <properties>
         <minio.version>8.5.11</minio.version>
+        <aws-sdk.version>2.25.60</aws-sdk.version>
     </properties>
 
     <dependencies>
@@ -54,6 +55,11 @@
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
             <version>${minio.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>${aws-sdk.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

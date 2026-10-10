@@ -82,7 +82,7 @@ class _ReportDialogState extends ConsumerState<_ReportDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DropdownButtonFormField<ReportReason>(
-              value: _reason,
+              initialValue: _reason,
               decoration: const InputDecoration(labelText: 'Lý do'),
               items: ReportReason.values
                   .map((r) => DropdownMenuItem(value: r, child: Text(r.label)))

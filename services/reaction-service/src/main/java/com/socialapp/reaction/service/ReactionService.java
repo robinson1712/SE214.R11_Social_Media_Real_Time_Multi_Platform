@@ -5,6 +5,7 @@ import com.socialapp.common.enums.TargetType;
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.ReactionEvent;
 import com.socialapp.common.exception.BadRequestException;
+import com.socialapp.common.exception.UnauthorizedException;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.reaction.dto.ReactionSummaryResponse;
 import com.socialapp.reaction.dto.UpsertReactionRequest;
@@ -25,24 +26,32 @@ public class ReactionService {
 
     private final ReactionRepository reactionRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ReactionTargetAccessService targetAccessService;
 
     public Reaction upsert(UpsertReactionRequest request) {
         if (request.targetType() == null || request.targetId() == null || request.type() == null) {
             throw new BadRequestException("targetType, targetId and type are required");
         }
         String userId = CurrentUserContext.getUserId();
+        requireAuthenticated(userId);
+        String targetOwnerId = targetAccessService
+                .requireReadable(request.targetType(), request.targetId(), userId)
+                .ownerId();
+        if (targetOwnerId == null || targetOwnerId.isBlank()) {
+            throw new IllegalStateException("Readable reaction target did not provide its owner");
+        }
 
         Reaction reaction = reactionRepository
                 .findByTargetTypeAndTargetIdAndUserId(request.targetType(), request.targetId(), userId)
                 .map(existing -> {
                     existing.setType(request.type());
-                    existing.setTargetOwnerId(request.targetOwnerId());
+                    existing.setTargetOwnerId(targetOwnerId);
                     return existing;
                 })
                 .orElseGet(() -> Reaction.builder()
                         .targetType(request.targetType())
                         .targetId(request.targetId())
-                        .targetOwnerId(request.targetOwnerId())
+                        .targetOwnerId(targetOwnerId)
                         .userId(userId)
                         .type(request.type())
                         .build());
@@ -55,6 +64,7 @@ public class ReactionService {
 
     public void delete(TargetType targetType, String targetId) {
         String userId = CurrentUserContext.getUserId();
+        requireAuthenticated(userId);
         Optional<Reaction> existing = reactionRepository.findByTargetTypeAndTargetIdAndUserId(targetType, targetId, userId);
         if (existing.isEmpty()) {
             return;
@@ -66,10 +76,13 @@ public class ReactionService {
 
     public Optional<Reaction> getMyReaction(TargetType targetType, String targetId) {
         String userId = CurrentUserContext.getUserId();
+        requireAuthenticated(userId);
+        targetAccessService.requireReadable(targetType, targetId, userId);
         return reactionRepository.findByTargetTypeAndTargetIdAndUserId(targetType, targetId, userId);
     }
 
     public ReactionSummaryResponse getSummary(TargetType targetType, String targetId) {
+        targetAccessService.requireReadable(targetType, targetId, CurrentUserContext.getUserId());
         Map<ReactionType, Long> counts = new EnumMap<>(ReactionType.class);
         long total = 0;
         for (ReactionRepository.TypeCount tc : reactionRepository.countByTarget(targetType, targetId)) {
@@ -77,6 +90,12 @@ public class ReactionService {
             total += tc.getCount();
         }
         return new ReactionSummaryResponse(counts, total);
+    }
+
+    private void requireAuthenticated(String userId) {
+        if (userId == null || userId.isBlank()) {
+            throw new UnauthorizedException("Authentication required");
+        }
     }
 
     private void publishEvent(Reaction reaction, boolean removed) {

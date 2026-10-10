@@ -61,16 +61,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
@@ -90,22 +80,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <!-- GroupRepositoryIntegrationTest needs a real Docker daemon reachable by
-                         Testcontainers (not just the `docker` CLI — some sandboxed/locked-down
-                         Docker Desktop setups allow the CLI through but block direct daemon API
-                         access from arbitrary processes). Keep it out of the default `mvn test`/
-                         `mvn install` run so the build stays green everywhere; run it explicitly
-                         with `mvn test -Dtest=GroupRepositoryIntegrationTest -DfailIfNoTests=false`
-                         on a machine where Testcontainers can actually reach Docker. -->
-                    <excludes>
-                        <exclude>**/*IntegrationTest.java</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>

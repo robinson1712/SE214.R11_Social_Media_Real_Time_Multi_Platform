@@ -8,6 +8,7 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -53,15 +54,23 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
+        // Identity headers are a private gateway-to-service contract. Remove any values
+        // supplied by clients before either the public-route bypass or JWT validation.
+        ServerHttpRequest request = exchange.getRequest().mutate()
+                .headers(headers -> {
+                    headers.remove("X-User-Id");
+                    headers.remove("X-User-Roles");
+                })
+                .build();
+        exchange = exchange.mutate().request(request).build();
         String path = request.getURI().getPath();
 
-        if (isPublic(path)) {
+        if (isPublic(path) || HttpMethod.OPTIONS.equals(request.getMethod())) {
             return chain.filter(exchange);
         }
 
         String token = resolveToken(request);
-        if (token == null || !jwtTokenProvider.validateToken(token)) {
+        if (token == null || !jwtTokenProvider.validateAccessToken(token)) {
             return unauthorized(exchange);
         }
 
@@ -70,8 +79,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String rolesHeader = roles == null ? "" : String.join(",", roles);
 
         ServerHttpRequest mutatedRequest = request.mutate()
-                .header("X-User-Id", userId)
-                .header("X-User-Roles", rolesHeader)
+                .headers(headers -> {
+                    headers.set("X-User-Id", userId);
+                    headers.set("X-User-Roles", rolesHeader);
+                })
                 .build();
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build());

@@ -1,5 +1,17 @@
 # Social Media Backend (Facebook-like) — Java Spring Boot Microservices
 
+> **Trạng thái:** Repo hiện còn Flutter Web, runtime Windows local và cấu hình Docker lịch sử.
+> [PLAN.md](PLAN.md) là kế hoạch **cloud $0/no-Docker/React chưa triển khai hoặc nghiệm thu**;
+> [NO_DOCKER_SETUP.md](NO_DOCKER_SETUP.md) chỉ hướng dẫn thử Windows local, laptop phải bật.
+> Các lệnh Docker phía dưới là tham chiếu lịch sử, không thuộc đường triển khai mục tiêu.
+> Các mô tả chức năng cũ bên dưới chưa được kiểm chứng lại cho cloud và không thay thế ma trận nghiệm thu.
+> Kiểm chứng mới nhất 06/10: [runtime report](infra/no-docker/RUNTIME_REPORT_2026-10-06.md),
+> [luồng build/chạy](NO_DOCKER_SETUP.md#luồng-chạy-sau-refactor-02102026). Supabase/MongoDB/Valkey/Storage đều kết nối đạt;
+> 19/19 service báo UP, Flutter Web chạy tại `http://localhost:3001`. Kiểm tra cơ bản qua gateway đạt;
+> đầy đủ luồng nghiệp vụ và triển khai cloud vẫn chưa nghiệm thu.
+
+Hướng dẫn deploy Flutter hiện tại lên Cloudflare Pages: [CLOUDFLARE_DEPLOY.md](CLOUDFLARE_DEPLOY.md). Backend Java/Kafka chạy native trên máy backend; frontend Pages gọi HTTPS/WSS origin được cấu hình lúc build.
+
 Backend microservice cho một mạng xã hội kiểu Facebook: post, avatar, story, reels, comment,
 reaction, block, group, fanpage, dating, nhắn tin real-time. Kiến trúc hướng đối tượng, phục vụ
 chung cho cả web và mobile qua REST API + WebSocket.
@@ -41,7 +53,8 @@ Client (Web/Mobile)
                 — Prometheus (9090, metrics, tự phát hiện service qua Eureka) + dashboard Grafana có sẵn
 ```
 
-Chi tiết đầy đủ: xem `docs/plan.md` hoặc lịch sử trò chuyện đã tạo ra hệ thống này.
+Kiến trúc cloud mục tiêu và điều kiện nghiệm thu: xem [PLAN.md](PLAN.md) và
+[ACCEPTANCE_MATRIX.md](infra/no-docker/ACCEPTANCE_MATRIX.md). Sơ đồ trên ghi lại cấu hình cũ.
 
 ## Công nghệ
 
@@ -53,7 +66,7 @@ Chi tiết đầy đủ: xem `docs/plan.md` hoặc lịch sử trò chuyện đ�
 - MinIO (S3-compatible) cho lưu trữ media
 - Docker Compose cho toàn bộ hạ tầng + service
 
-## Chạy toàn bộ hệ thống
+## Cách chạy Docker/Flutter lịch sử (tham chiếu, không thuộc kế hoạch cloud)
 
 ### 1. Build tất cả module (bắt buộc trước khi build Docker image, vì Dockerfile chỉ copy jar đã build sẵn)
 
@@ -135,22 +148,29 @@ rồi chạy service bằng `mvn spring-boot:run` trong từng thư mục `servi
   hoặc giá trị rỗng tuỳ ngữ cảnh). Xem trạng thái circuit qua `actuator/circuitbreakers`.
 - **Observability**: distributed tracing (Zipkin) + centralized logging (Loki/Promtail/Grafana) —
   xem mục Observability ở trên.
-- **CI/CD**: GitHub Actions (`.github/workflows/ci-cd.yml`) build+test toàn reactor, chạy
-  Testcontainers integration test, build Docker image cho mọi service, push GHCR khi merge `main`.
+- **CI no-Docker hiện tại**: workflow cài PostgreSQL native trên hosted runner, bật
+  `GroupRepositoryIntegrationTest` bằng `RUN_NATIVE_POSTGRES_TESTS=true`, chạy Maven, rồi build
+  và upload bundle Windows/Flutter sau khi CI đạt. Workflow/bundle chưa được chạy lại sau các thay đổi
+  hiện tại. Tác vụ chỉ tạo artifact; auto deploy cloud, Linux ARM64 runtime và React frontend chưa có.
+  Xem [PLAN.md](PLAN.md) để biết các gate còn mở.
 - **Content moderation** (`moderation-service`, port 8095): profanity filter tự động (tiếng Anh +
   tiếng Việt, giữ nguyên dấu thanh) chặn `post-service`/`comment-service`/`reels-service`/
   `story-service`/`group-service`/`fanpage-service` lúc tạo nội dung — đủ cả 6 loại nội dung trong hệ
   thống; user report nội dung vi phạm qua `POST /api/moderation/reports`; admin (role `ADMIN`) duyệt
   hàng đợi qua `GET /api/moderation/reports`, xử lý `PUT /api/moderation/reports/{id}/resolve` với
   `REMOVE_CONTENT` sẽ publish sự kiện Kafka xoá nội dung xuyên service (`group-service`/
-  `fanpage-service` xoá cascade cả bảng thành viên/follower/admin liên quan). Set biến môi trường
-  `ADMIN_EMAILS=admin@social.app,...` (comma-separated) trước khi build `auth-service` để các email
-  đó tự động có role `ADMIN` lúc đăng ký.
+  `fanpage-service` xoá cascade cả bảng thành viên/follower/admin liên quan). Đăng ký công khai luôn
+  tạo role `USER`; email không còn tự cấp role `ADMIN`. Admin đầu tiên có thể được tạo qua
+  `POST http://127.0.0.1:8081/internal/auth/bootstrap-admin` bằng header
+  `X-Admin-Bootstrap-Token`, chỉ từ máy auth-service hoặc SSH tunnel tới loopback. Đặt
+  `ADMIN_BOOTSTRAP_TOKEN` thành bí mật ngẫu nhiên tối thiểu 32 byte cho lần bootstrap, rồi gỡ bí mật
+  khỏi môi trường; endpoint từ chối nếu đã có ADMIN. Không gọi qua API Gateway. Đây mới là triển khai
+  source, chưa được xác nhận runtime; xem [PLAN.md](PLAN.md) và [acceptance matrix](infra/no-docker/ACCEPTANCE_MATRIX.md).
 - **Share/repost, tag người dùng, custom audience privacy** (`post-service`): `POST /api/posts/{id}/share`
   chia sẻ lại 1 bài (kèm lời bình, tăng `shareCount` bài gốc); tạo/sửa bài có thể kèm `taggedUserIds`
   (thông báo `type: TAG` cho người được tag); `privacy: CUSTOM` + `customAudienceUserIds` giới hạn
-  người xem theo danh sách cụ thể. **Post-service giờ mới thực sự enforce privacy lúc đọc**
-  (`getPostsByAuthor`/`ByGroup`/`ByPage`) — `FRIENDS` gọi Feign sang `user-service` kiểm tra bạn bè.
+  người xem theo danh sách cụ thể. Một số đường list (`getPostsByAuthor`/`ByGroup`/`ByPage`)
+  kiểm tra privacy; GET theo ID, batch và feed còn rủi ro cần sửa/test theo [PLAN.md](PLAN.md).
 - **Tìm kiếm tổng hợp** (`search-service`, port 8096): `GET /api/search?q=&limit=` gộp kết quả từ
   user/group/fanpage/post-service qua Feign (mỗi client có circuit breaker + fallback rỗng riêng —
   1 service down không sập cả search). Không có database riêng.
@@ -158,9 +178,11 @@ rồi chạy service bằng `mvn spring-boot:run` trong từng thư mục `servi
   các API thật ở trên — đăng nhập, feed, đăng bài (kèm share/tag/custom-audience privacy), comment/
   reply, reaction, profile + kết bạn, tìm kiếm tổng hợp (kèm trang kết quả riêng), Group, Fanpage,
   Story, Reels, Dating, Chat real-time (STOMP/WebSocket), Notification real-time (STOMP/WebSocket),
-  trang quản trị Moderation (gate theo role `ADMIN`). Đã phủ đủ chức năng của toàn bộ 16 business
-  service. Chi tiết đầy đủ + giới hạn đã biết (chưa test bằng trình duyệt thật, chưa test round-trip
-  WebSocket thật): xem mục "Giai đoạn 2a"/"Giai đoạn 2b" trong `TODO.md`.
+  trang quản trị Moderation (gate theo role `ADMIN`). Mô tả cũ về độ phủ chưa được đối soát từng
+  action với React hoặc nghiệm thu cloud: cần hoàn tất inventory Flutter ↔ REST/STOMP ↔ case ID trong
+  [ACCEPTANCE_MATRIX.md](infra/no-docker/ACCEPTANCE_MATRIX.md), gồm unmatch, recall message, xóa
+  notification và dismiss friend suggestion. Chưa test bằng trình duyệt thật hoặc round-trip WebSocket
+  thật; xem thêm mục "Giai đoạn 2a"/"Giai đoạn 2b" trong `TODO.md`.
 
 ## Giới hạn còn lại
 

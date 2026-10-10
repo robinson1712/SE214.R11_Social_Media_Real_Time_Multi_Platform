@@ -4,12 +4,14 @@ import com.socialapp.comment.dto.CreateCommentRequest;
 import com.socialapp.comment.dto.UpdateCommentRequest;
 import com.socialapp.comment.entity.Comment;
 import com.socialapp.comment.repository.CommentRepository;
+import com.socialapp.common.dto.ContentAccessResponse;
 import com.socialapp.common.enums.TargetType;
 import com.socialapp.common.event.CommentCreatedEvent;
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
+import com.socialapp.common.exception.UnauthorizedException;
 import com.socialapp.common.moderation.ProfanityFilter;
 import com.socialapp.common.security.CurrentUserContext;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final CommentTargetAccessService targetAccessService;
 
     public Comment createComment(CreateCommentRequest request) {
         if (request.targetType() == null) {
@@ -43,12 +46,25 @@ public class CommentService {
         rejectIfProfane(request.content());
 
         String authorId = CurrentUserContext.getUserId();
+        if (authorId == null) {
+            throw new UnauthorizedException("Authentication required");
+        }
+        ContentAccessResponse target = targetAccessService.requireReadable(
+                request.targetType(), request.targetId(), authorId);
+
+        if (request.parentCommentId() != null && !request.parentCommentId().isBlank()) {
+            Comment parent = findActiveComment(request.parentCommentId());
+            if (parent.getTargetType() != request.targetType()
+                    || !parent.getTargetId().equals(request.targetId())) {
+                throw new BadRequestException("Reply parent must belong to the same content target");
+            }
+        }
 
         Comment comment = Comment.builder()
                 .targetType(request.targetType())
                 .targetId(request.targetId())
                 .authorId(authorId)
-                .targetOwnerId(request.targetOwnerId())
+                .targetOwnerId(target.ownerId())
                 .parentCommentId(request.parentCommentId())
                 .content(request.content())
                 .build();
@@ -64,12 +80,33 @@ public class CommentService {
     }
 
     public Page<Comment> getTopLevelComments(TargetType targetType, String targetId, Pageable pageable) {
+        targetAccessService.requireReadable(targetType, targetId, CurrentUserContext.getUserId());
         return commentRepository.findByTargetTypeAndTargetIdAndParentCommentIdIsNullAndDeletedFalseOrderByCreatedAtDesc(
                 targetType, targetId, pageable);
     }
 
     public Page<Comment> getReplies(String parentCommentId, Pageable pageable) {
-        return commentRepository.findByParentCommentIdAndDeletedFalseOrderByCreatedAtAsc(parentCommentId, pageable);
+        Comment parent = findActiveComment(parentCommentId);
+        targetAccessService.requireReadable(parent.getTargetType(), parent.getTargetId(), CurrentUserContext.getUserId());
+        return commentRepository.findByParentCommentIdAndTargetTypeAndTargetIdAndDeletedFalseOrderByCreatedAtAsc(
+                parentCommentId, parent.getTargetType(), parent.getTargetId(), pageable);
+    }
+
+    /** Internal viewer-aware lookup so reactions on comments inherit their parent content's privacy. */
+    public ContentAccessResponse reactionAccess(String commentId, String viewerId) {
+        return commentRepository.findByIdAndDeletedFalse(commentId)
+                .map(comment -> {
+                    ContentAccessResponse target = targetAccessService.check(
+                            comment.getTargetType(), comment.getTargetId(), viewerId);
+                    return new ContentAccessResponse(target.exists(), target.exists() && target.accessible(),
+                            comment.getAuthorId());
+                })
+                .orElseGet(() -> new ContentAccessResponse(false, false, null));
+    }
+
+    private Comment findActiveComment(String id) {
+        return commentRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + id));
     }
 
     private Comment getOwnedActiveComment(String id) {
@@ -87,6 +124,7 @@ public class CommentService {
         if (!comment.getAuthorId().equals(currentUserId)) {
             throw new ForbiddenException("Only the author can edit this comment");
         }
+        targetAccessService.requireReadable(comment.getTargetType(), comment.getTargetId(), currentUserId);
         rejectIfProfane(request.content());
         comment.setContent(request.content());
         comment.setUpdatedAt(Instant.now());

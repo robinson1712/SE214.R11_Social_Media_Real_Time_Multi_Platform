@@ -71,7 +71,7 @@ public class FeedQueryService {
         }
         final Set<String> seen = seenIds;
 
-        List<PostDto> ranked = fetchPosts(postIds).stream()
+        List<PostDto> ranked = fetchPosts(postIds, userId).stream()
                 .filter(post -> !isFlopped(post, seen))
                 .sorted(Comparator.comparingDouble((PostDto post) -> rankScore(post, seen)).reversed())
                 .toList();
@@ -117,8 +117,8 @@ public class FeedQueryService {
         return seen.contains(post.id()) ? score * SEEN_PENALTY : score;
     }
 
-    private List<PostDto> fetchPosts(List<String> postIds) {
-        var response = postClient.getBatch(String.join(",", postIds));
+    private List<PostDto> fetchPosts(List<String> postIds, String viewerId) {
+        var response = postClient.getBatch(String.join(",", postIds), viewerId);
         if (response == null || response.data() == null) {
             return Collections.emptyList();
         }

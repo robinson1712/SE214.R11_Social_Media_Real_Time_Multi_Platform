@@ -8,6 +8,8 @@ import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.security.CurrentUserContext;
+import com.socialapp.post.client.FanpageAuthorizationClient;
+import com.socialapp.post.client.GroupAuthorizationClient;
 import com.socialapp.post.client.ReelClient;
 import com.socialapp.post.client.UserServiceClient;
 import com.socialapp.post.dto.CreatePostRequest;
@@ -55,6 +57,10 @@ class PostServiceTest {
     private UserServiceClient userServiceClient;
     @Mock
     private ReelClient reelClient;
+    @Mock
+    private GroupAuthorizationClient groupAuthorizationClient;
+    @Mock
+    private FanpageAuthorizationClient fanpageAuthorizationClient;
 
     private KafkaTemplate<String, Object> kafkaTemplate;
     private PostService postService;
@@ -62,7 +68,8 @@ class PostServiceTest {
     @BeforeEach
     void setUp() {
         kafkaTemplate = mock(KafkaTemplate.class);
-        postService = new PostService(postRepository, kafkaTemplate, userServiceClient, reelClient);
+        postService = new PostService(postRepository, kafkaTemplate, userServiceClient, reelClient,
+                groupAuthorizationClient, fanpageAuthorizationClient);
     }
 
     @AfterEach
@@ -179,6 +186,70 @@ class PostServiceTest {
     }
 
     @Test
+    void createPost_approvedGroupMember_isAuthorizedAndEmitsPostEvent() {
+        CurrentUserContext.setForTests("member-1", List.of("USER"));
+        when(groupAuthorizationClient.isApprovedMember("group-1", "member-1")).thenReturn(true);
+        when(postRepository.save(any(Post.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Post saved = postService.createPost(new CreatePostRequest("group post", null, Privacy.PUBLIC,
+                "group-1", null, null, null));
+
+        assertThat(saved.getGroupId()).isEqualTo("group-1");
+        verify(postRepository).save(any(Post.class));
+        verify(kafkaTemplate).send(eq(KafkaTopics.POST_CREATED), eq(saved.getId()), any(PostCreatedEvent.class));
+    }
+
+    @Test
+    void createPost_nonMemberGroupAuthor_isRejectedBeforePostOrEvent() {
+        CurrentUserContext.setForTests("outsider", List.of("USER"));
+        when(groupAuthorizationClient.isApprovedMember("group-1", "outsider")).thenReturn(false);
+
+        assertThatThrownBy(() -> postService.createPost(new CreatePostRequest("group post", null, Privacy.PUBLIC,
+                "group-1", null, null, null))).isInstanceOf(ForbiddenException.class);
+
+        verify(postRepository, never()).save(any());
+        verify(kafkaTemplate, never()).send(any(), any(), any());
+    }
+
+    @Test
+    void createPost_pageEditor_isAuthorized() {
+        CurrentUserContext.setForTests("editor-1", List.of("USER"));
+        when(fanpageAuthorizationClient.canManagePosts("page-1", "editor-1")).thenReturn(true);
+        when(postRepository.save(any(Post.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Post saved = postService.createPost(new CreatePostRequest("page post", null, Privacy.PUBLIC,
+                null, "page-1", null, null));
+
+        assertThat(saved.getPageId()).isEqualTo("page-1");
+        verify(kafkaTemplate).send(eq(KafkaTopics.POST_CREATED), eq(saved.getId()), any(PostCreatedEvent.class));
+    }
+
+    @Test
+    void createPost_removedPageManager_isRejectedBeforePostOrEvent() {
+        CurrentUserContext.setForTests("removed-manager", List.of("USER"));
+        when(fanpageAuthorizationClient.canManagePosts("page-1", "removed-manager")).thenReturn(false);
+
+        assertThatThrownBy(() -> postService.createPost(new CreatePostRequest("page post", null, Privacy.PUBLIC,
+                null, "page-1", null, null))).isInstanceOf(ForbiddenException.class);
+
+        verify(postRepository, never()).save(any());
+        verify(kafkaTemplate, never()).send(any(), any(), any());
+    }
+
+    @Test
+    void createPost_targetingGroupAndPage_isRejectedBeforeAuthorizationOrSideEffects() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+
+        assertThatThrownBy(() -> postService.createPost(new CreatePostRequest("invalid", null, Privacy.PUBLIC,
+                "group-1", "page-1", null, null))).isInstanceOf(BadRequestException.class);
+
+        verify(groupAuthorizationClient, never()).isApprovedMember(any(), any());
+        verify(fanpageAuthorizationClient, never()).canManagePosts(any(), any());
+        verify(postRepository, never()).save(any());
+        verify(kafkaTemplate, never()).send(any(), any(), any());
+    }
+
+    @Test
     void updatePost_editingInProfanity_throwsBadRequestAndNeverSaves() {
         CurrentUserContext.setForTests("author-1", List.of("USER"));
         when(postRepository.findById("post-1")).thenReturn(Optional.of(existingPost("post-1", "author-1")));
@@ -249,6 +320,37 @@ class PostServiceTest {
 
         assertThatThrownBy(() -> postService.getPost("missing"))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getVisiblePost_privateContentIsHiddenFromOtherViewers() {
+        Post privatePost = existingPost("private-1", "author-1");
+        privatePost.setPrivacy(Privacy.PRIVATE);
+        when(postRepository.findById("private-1")).thenReturn(Optional.of(privatePost));
+
+        assertThatThrownBy(() -> postService.getVisiblePost("private-1", "viewer-1"))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getVisiblePost_ownerAndPublicViewerCanRead() {
+        Post post = existingPost("post-1", "author-1");
+        when(postRepository.findById("post-1")).thenReturn(Optional.of(post));
+
+        assertThat(postService.getVisiblePost("post-1", "viewer-1")).isSameAs(post);
+    }
+
+    @Test
+    void getVisiblePostsByIdsFiltersPrivateItemsFromBatch() {
+        Post publicPost = existingPost("public-1", "author-1");
+        Post privatePost = existingPost("private-1", "author-1");
+        privatePost.setPrivacy(Privacy.PRIVATE);
+        when(postRepository.findByIdIn(List.of("public-1", "private-1")))
+                .thenReturn(List.of(publicPost, privatePost));
+
+        List<Post> result = postService.getVisiblePostsByIds(List.of("public-1", "private-1"), "viewer-1");
+
+        assertThat(result).containsExactly(publicPost);
     }
 
     @Test
@@ -550,6 +652,20 @@ class PostServiceTest {
     }
 
     // ---------- searchPublicPosts ----------
+
+    @Test
+    void searchPublicPosts_excludesPrivateGroupContentEvenForAnAuthenticatedMember() {
+        CurrentUserContext.setForTests("member", List.of("USER"));
+        Pageable pageable = PageRequest.of(0, 20);
+        Post publicPost = existingPost("public", "author");
+        Post privateGroupPost = existingPost("group-post", "author");
+        privateGroupPost.setGroupId("private-group");
+        when(postRepository.findByContentContainingIgnoreCaseAndPrivacy("hello", Privacy.PUBLIC, pageable))
+                .thenReturn(new PageImpl<>(List.of(publicPost, privateGroupPost)));
+        when(groupAuthorizationClient.canViewContent("private-group", "")).thenReturn(false);
+
+        assertThat(postService.searchPublicPosts("hello", pageable).getContent()).containsExactly(publicPost);
+    }
 
     @Test
     void searchPublicPosts_matchingQuery_delegatesToRepositoryWithPublicPrivacy() {

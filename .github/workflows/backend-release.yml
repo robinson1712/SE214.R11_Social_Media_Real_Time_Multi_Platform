@@ -1,0 +1,108 @@
+name: Publish backend release
+
+on:
+  workflow_run:
+    workflows: [CI/CD]
+    branches: [main]
+    types: [completed]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-backend-release-main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      vars.AZURE_BACKEND_DEPLOY_ENABLED == 'true' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Verify this is still the latest main commit
+        id: revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          current=$(git rev-parse HEAD)
+          latest=$(gh api "repos/$REPOSITORY/commits/main" --jq .sha)
+          echo "sha=$current" >> "$GITHUB_OUTPUT"
+          if [ "$current" = "$latest" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "A newer main commit exists; its CI run will publish the release."
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.revision.outputs.current == 'true'
+        with:
+          python-version: '3.12'
+
+      - name: Load backend environment from GitHub Secret
+        if: steps.revision.outputs.current == 'true'
+        shell: pwsh
+        env:
+          BACKEND_ENV_PS1: ${{ secrets.BACKEND_ENV_PS1 }}
+        run: |
+          if (-not $env:BACKEND_ENV_PS1) { throw 'Set the BACKEND_ENV_PS1 repository secret before enabling deployment.' }
+          New-Item -ItemType Directory -Force .runtime | Out-Null
+          [IO.File]::WriteAllText("$PWD/.runtime/env.ps1", $env:BACKEND_ENV_PS1, [Text.UTF8Encoding]::new($false))
+
+      - name: Package tested backend source and runtime settings
+        if: steps.revision.outputs.current == 'true'
+        env:
+          REVISION: ${{ steps.revision.outputs.sha }}
+          BACKEND_HOST: ${{ vars.AZURE_BACKEND_HOST }}
+          PAGES_ORIGIN: ${{ vars.AZURE_PAGES_ORIGIN }}
+        run: |
+          python -m pip install --disable-pip-version-check PyYAML==6.0.2
+          pwsh -NoProfile -File infra/azure/export-cloud-settings.ps1 -Output "$RUNNER_TEMP/cloud-settings.json"
+          python infra/azure/package_backend.py --cloud-settings "$RUNNER_TEMP/cloud-settings.json" \
+            --revision "$REVISION" --output "$RUNNER_TEMP/backend.tar.gz" \
+            --backend-host "$BACKEND_HOST" --pages-origin "$PAGES_ORIGIN"
+
+      - uses: azure/login@v2
+        if: steps.revision.outputs.current == 'true'
+        with:
+          client-id: ${{ vars.AZURE_BACKEND_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Publish private immutable package and latest pointer
+        if: steps.revision.outputs.current == 'true'
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ vars.AZURE_RELEASE_STORAGE_ACCOUNT }}
+          REVISION: ${{ steps.revision.outputs.sha }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --container-name releases \
+            --name "packages/$REVISION.tar.gz" --file "$RUNNER_TEMP/backend.tar.gz" \
+            --auth-mode login --overwrite true --only-show-errors --output none
+          latest=$(gh api "repos/$REPOSITORY/commits/main" --jq .sha)
+          if [ "$latest" != "$REVISION" ]; then
+            echo "A newer main commit arrived; leave the latest pointer unchanged."
+            exit 0
+          fi
+          checksum=$(sha256sum "$RUNNER_TEMP/backend.tar.gz" | cut -d ' ' -f 1)
+          digest=$(cat "$RUNNER_TEMP/backend.tar.gz.digest")
+          printf '{"revision":"%s","sha256":"%s","backend_digest":"%s"}\n' "$REVISION" "$checksum" "$digest" > "$RUNNER_TEMP/latest.json"
+          az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --container-name releases \
+            --name latest.json --file "$RUNNER_TEMP/latest.json" --auth-mode login \
+            --overwrite true --only-show-errors --output none
+          echo "Published tested backend $REVISION. VM will apply it while running or on next boot."
+
+      - name: Remove runner's temporary credential files
+        if: always()
+        run: rm -f .runtime/env.ps1 "$RUNNER_TEMP/cloud-settings.json" "$RUNNER_TEMP/backend.tar.gz"

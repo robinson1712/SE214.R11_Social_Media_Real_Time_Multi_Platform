@@ -285,7 +285,7 @@ class _StoryViewerDialogState extends ConsumerState<_StoryViewerDialog>
                       icon: const Icon(Icons.delete, color: Colors.white),
                       onPressed: () async {
                         await ref.read(storyActionsProvider).delete(story.id);
-                        if (mounted) Navigator.of(context).pop();
+                        if (context.mounted) Navigator.of(context).pop();
                       },
                     ),
                   IconButton(

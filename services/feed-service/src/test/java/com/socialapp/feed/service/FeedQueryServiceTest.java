@@ -69,7 +69,7 @@ class FeedQueryServiceTest {
     }
 
     private void mockPosts(List<PostDto> posts) {
-        when(postClient.getBatch(anyString())).thenReturn(ApiResponse.success(posts));
+        when(postClient.getBatch(anyString(), anyString())).thenReturn(ApiResponse.success(posts));
     }
 
     private static PostDto post(String id, Instant createdAt, long reactionCount, long commentCount) {
@@ -86,7 +86,7 @@ class FeedQueryServiceTest {
         List<PostDto> result = feedQueryService.getFeed("user1", 0, 10);
 
         assertThat(result).isEmpty();
-        verify(postClient, never()).getBatch(anyString());
+        verify(postClient, never()).getBatch(anyString(), anyString());
     }
 
     @Test
@@ -96,7 +96,7 @@ class FeedQueryServiceTest {
         List<PostDto> result = feedQueryService.getFeed("user1", 0, 10);
 
         assertThat(result).isEmpty();
-        verify(postClient, never()).getBatch(anyString());
+        verify(postClient, never()).getBatch(anyString(), anyString());
     }
 
     // ---------- ranking ----------
@@ -183,7 +183,7 @@ class FeedQueryServiceTest {
     @Test
     void getFeed_postClientReturnsNullData_returnsEmptyList() {
         mockPool(List.of("p1"));
-        when(postClient.getBatch(anyString())).thenReturn(ApiResponse.error("post-service unavailable"));
+        when(postClient.getBatch(anyString(), anyString())).thenReturn(ApiResponse.error("post-service unavailable"));
 
         List<PostDto> result = feedQueryService.getFeed("user1", 0, 10);
 
@@ -193,7 +193,7 @@ class FeedQueryServiceTest {
     @Test
     void getFeed_postClientReturnsNullResponse_returnsEmptyList() {
         mockPool(List.of("p1"));
-        when(postClient.getBatch(anyString())).thenReturn(null);
+        when(postClient.getBatch(anyString(), anyString())).thenReturn(null);
 
         List<PostDto> result = feedQueryService.getFeed("user1", 0, 10);
 

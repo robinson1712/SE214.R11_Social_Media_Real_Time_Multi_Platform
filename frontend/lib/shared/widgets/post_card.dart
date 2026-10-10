@@ -274,11 +274,12 @@ class _PostCardState extends ConsumerState<PostCard> {
           }
           break;
         case 'report':
+          if (!context.mounted) return;
           await showReportDialog(context, targetType: ReportTargetType.post, targetId: widget.post.id);
           break;
       }
     } catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Thao tác thất bại: $e')),
       );

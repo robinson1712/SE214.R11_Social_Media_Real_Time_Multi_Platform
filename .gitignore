@@ -22,6 +22,15 @@ target/
 *.tar.gz
 *.rar
 
+# No-Docker runtime state, downloaded tools, credentials and release bundles
+.runtime/
+dist/
+infra/no-docker/env.ps1
+frontend/.dart_tool/
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
@@ -37,3 +46,5 @@ replay_pid*
 # OS noise
 .DS_Store
 Thumbs.db
+**/__pycache__/
+*.pyc

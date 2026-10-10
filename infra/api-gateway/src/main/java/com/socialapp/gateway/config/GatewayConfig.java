@@ -11,6 +11,7 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -30,12 +31,22 @@ public class GatewayConfig {
     }
 
     @Bean
-    public CorsWebFilter corsWebFilter() {
+    public CorsWebFilter corsWebFilter(
+            @Value("${app.cors.allowed-origins:http://localhost:3001}") String configuredOrigins) {
+        List<String> allowedOrigins = Arrays.stream(configuredOrigins.split(",", -1))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
+        if (allowedOrigins.isEmpty() || allowedOrigins.contains("*")) {
+            throw new IllegalStateException("Configure explicit app.cors.allowed-origins; wildcard CORS is not allowed");
+        }
+
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOriginPatterns(List.of("*"));
+        corsConfig.setAllowedOrigins(allowedOrigins);
         corsConfig.setMaxAge(3600L);
-        corsConfig.addAllowedMethod("*");
-        corsConfig.addAllowedHeader("*");
+        corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        corsConfig.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
+        corsConfig.setExposedHeaders(List.of("Retry-After"));
         corsConfig.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());
@@ -54,16 +65,15 @@ public class GatewayConfig {
      * registration spam.
      */
     @Bean
-    public KeyResolver userOrIpKeyResolver() {
+    public KeyResolver userOrIpKeyResolver(
+            @Value("${app.security.trusted-proxies:127.0.0.1,::1}") String trustedProxies) {
+        TrustedProxyClientIpResolver clientIpResolver = new TrustedProxyClientIpResolver(trustedProxies);
         return exchange -> {
             String userId = exchange.getRequest().getHeaders().getFirst("X-User-Id");
             if (userId != null && !userId.isBlank()) {
                 return Mono.just(userId);
             }
-            String ip = exchange.getRequest().getRemoteAddress() != null
-                    ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
-                    : "unknown";
-            return Mono.just(ip);
+            return Mono.just(clientIpResolver.resolve(exchange.getRequest()));
         };
     }
 }

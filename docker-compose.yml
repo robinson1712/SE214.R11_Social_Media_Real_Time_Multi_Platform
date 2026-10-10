@@ -8,7 +8,6 @@ x-app-env: &app-env
   REDIS_PORT: 6379
   JWT_SECRET: change-this-social-app-jwt-secret-key-must-be-at-least-256-bits
   ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
-  ADMIN_EMAILS: admin@social.app
   # The Flutter web client legitimately fires bursts of concurrent requests on
   # a single page (per-post/comment author lookups, feed, notifications, chat
   # conversations, presence/follow-status checks all firing together) that
@@ -179,10 +178,11 @@ services:
     container_name: sma-auth-service
     environment:
       <<: *app-env
+      ADMIN_BOOTSTRAP_TOKEN: ${ADMIN_BOOTSTRAP_TOKEN:-}
       DB_HOST: postgres
       DB_PORT: 5432
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     depends_on:
       - postgres
       - kafka

@@ -1,16 +1,21 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../auth/token_storage.dart';
 import 'api_exception.dart';
 
-/// Base URL of api-gateway. CORS is already open there (`allowedOriginPatterns: *`),
-/// so the Flutter web app calls it directly with no proxy.
-const String apiBaseUrl = String.fromEnvironment(
-  'API_BASE_URL',
-  defaultValue: 'http://localhost:8080',
-);
+/// Base URL of api-gateway. Web builds use the current site origin so Caddy can
+/// serve the app and proxy API/WebSocket traffic on one origin. Native builds
+/// keep the local gateway default; API_BASE_URL can override either value.
+const String _configuredApiBaseUrl = String.fromEnvironment('API_BASE_URL');
+const bool backendPending = bool.fromEnvironment('BACKEND_PENDING');
+final String apiBaseUrl = _configuredApiBaseUrl.isNotEmpty
+    ? _configuredApiBaseUrl
+    : kIsWeb
+        ? Uri.base.origin
+        : 'http://localhost:8080';
 
 /// Paths that must never get an `Authorization` header attached and must
 /// never trigger a refresh-and-retry on 401 (they ARE the auth endpoints).
@@ -54,6 +59,14 @@ class DioClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          if (backendPending) {
+            handler.reject(DioException(
+              requestOptions: options,
+              type: DioExceptionType.connectionError,
+              message: 'Máy chủ chưa kết nối. Đăng nhập sẽ khả dụng sau khi triển khai backend.',
+            ));
+            return;
+          }
           if (!_isAuthEndpoint(options.path)) {
             final token = await TokenStorage.instance.readAccessToken();
             if (token != null) {
@@ -94,7 +107,14 @@ class DioClient {
             return;
           }
 
-          final newAccessToken = await _refreshAccessToken();
+          if (error.requestOptions.extra['retried401'] == true) {
+            await TokenStorage.instance.clear();
+            onSessionExpired?.call();
+            handler.next(error);
+            return;
+          }
+
+          final newAccessToken = await _refreshAccessToken(dio.options.baseUrl);
           if (newAccessToken == null) {
             await TokenStorage.instance.clear();
             onSessionExpired?.call();
@@ -104,6 +124,7 @@ class DioClient {
 
           try {
             final retryOptions = error.requestOptions;
+            retryOptions.extra['retried401'] = true;
             retryOptions.headers['Authorization'] = 'Bearer $newAccessToken';
             final response = await dio.fetch(retryOptions);
             handler.resolve(response);
@@ -117,7 +138,7 @@ class DioClient {
     return dio;
   }
 
-  static Future<String?> _refreshAccessToken() {
+  static Future<String?> _refreshAccessToken(String baseUrl) {
     if (_refreshCompleter != null) return _refreshCompleter!.future;
 
     final completer = Completer<String?>();
@@ -131,7 +152,11 @@ class DioClient {
           return;
         }
 
-        final refreshDio = Dio(BaseOptions(baseUrl: apiBaseUrl));
+        final refreshDio = Dio(BaseOptions(
+          baseUrl: baseUrl,
+          connectTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+        ));
         final response = await refreshDio.post<Map<String, dynamic>>(
           '/api/auth/refresh',
           data: {'refreshToken': refreshToken},

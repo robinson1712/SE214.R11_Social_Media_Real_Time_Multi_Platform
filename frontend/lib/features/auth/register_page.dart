@@ -120,7 +120,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<Gender>(
-                        value: _gender,
+                        initialValue: _gender,
                         decoration:
                             const InputDecoration(labelText: 'Giới tính (tuỳ chọn)'),
                         items: const [

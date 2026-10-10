@@ -1,0 +1,14 @@
+user-registered-events
+friend-request-events
+post-created-events
+comment-created-events
+reaction-events
+story-created-events
+reel-created-events
+group-events
+page-events
+match-events
+message-events
+content-removed-events
+post-tagged-events
+follow-events

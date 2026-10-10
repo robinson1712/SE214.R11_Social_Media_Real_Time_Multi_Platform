@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'core/router/app_router.dart';
+import 'core/api/dio_client.dart' show backendPending;
 import 'core/theme/app_theme.dart';
 import 'features/auth/auth_provider.dart';
 
@@ -78,7 +79,26 @@ class SocialApp extends ConsumerWidget {
         final authStatus = ref.watch(authProvider.select((s) => s.status));
         return Stack(
           children: [
-            if (child != null) child,
+            if (child != null)
+              Column(
+                children: [
+                  if (backendPending)
+                    const Material(
+                      color: Color(0xFFFFF3CD),
+                      child: SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Text(
+                            'Máy chủ chưa kết nối. Đăng nhập và các chức năng trực tuyến chưa khả dụng.',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                  Expanded(child: child),
+                ],
+              ),
             // Covers whatever route the app happened to boot/reload into
             // while session verification is still in flight, so a
             // reload never has to *navigate* anywhere just to hide a

@@ -358,8 +358,8 @@ class _ChatComposerBarState extends ConsumerState<ChatComposerBar> {
                 filled: true,
                 fillColor: Colors.grey.shade100,
                 contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: widget.compact ? 8 : 10),
-                border: OutlineInputBorder(
-                  borderRadius: const BorderRadius.all(Radius.circular(20)),
+                border: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
                   borderSide: BorderSide.none,
                 ),
               ),

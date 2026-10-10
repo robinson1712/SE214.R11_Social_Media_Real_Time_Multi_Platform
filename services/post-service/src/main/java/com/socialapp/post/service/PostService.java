@@ -1,15 +1,19 @@
 package com.socialapp.post.service;
 
 import com.socialapp.common.enums.Privacy;
+import com.socialapp.common.dto.ContentAccessResponse;
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.PostCreatedEvent;
 import com.socialapp.common.event.PostTaggedEvent;
 import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
+import com.socialapp.common.exception.UnauthorizedException;
 import com.socialapp.common.moderation.ProfanityFilter;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.post.client.ReelClient;
+import com.socialapp.post.client.FanpageAuthorizationClient;
+import com.socialapp.post.client.GroupAuthorizationClient;
 import com.socialapp.post.client.UserServiceClient;
 import com.socialapp.post.dto.CreatePostRequest;
 import com.socialapp.post.dto.ShareRequest;
@@ -37,8 +41,22 @@ public class PostService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final UserServiceClient userServiceClient;
     private final ReelClient reelClient;
+    private final GroupAuthorizationClient groupAuthorizationClient;
+    private final FanpageAuthorizationClient fanpageAuthorizationClient;
 
     public Post createPost(CreatePostRequest request) {
+        String authorId = CurrentUserContext.getUserId();
+        if (authorId == null || authorId.isBlank()) {
+            throw new UnauthorizedException("Authentication required");
+        }
+        if (request.groupId() != null && request.groupId().isBlank()
+                || request.pageId() != null && request.pageId().isBlank()) {
+            throw new BadRequestException("Container id cannot be blank");
+        }
+        if (request.groupId() != null && !request.groupId().isBlank()
+                && request.pageId() != null && !request.pageId().isBlank()) {
+            throw new BadRequestException("A post cannot target both a group and a page");
+        }
         boolean hasContent = request.content() != null && !request.content().isBlank();
         boolean hasMedia = request.mediaUrls() != null && !request.mediaUrls().isEmpty();
         if (!hasContent && !hasMedia) {
@@ -49,7 +67,7 @@ public class PostService {
         Privacy privacy = request.privacy() != null ? request.privacy() : Privacy.PUBLIC;
         validatePrivacyAudience(privacy, request.customAudienceUserIds());
 
-        String authorId = CurrentUserContext.getUserId();
+        authorizeContainerPost(request, authorId);
         Post post = Post.builder()
                 .authorId(authorId)
                 .content(request.content())
@@ -75,6 +93,17 @@ public class PostService {
         return saved;
     }
 
+    private void authorizeContainerPost(CreatePostRequest request, String authorId) {
+        if (request.groupId() != null && !request.groupId().isBlank()
+                && !groupAuthorizationClient.isApprovedMember(request.groupId(), authorId)) {
+            throw new ForbiddenException("Only an approved group member may create a group post");
+        }
+        if (request.pageId() != null && !request.pageId().isBlank()
+                && !fanpageAuthorizationClient.canManagePosts(request.pageId(), authorId)) {
+            throw new ForbiddenException("Only a current page manager may create a page post");
+        }
+    }
+
     /**
      * Raw, unenforced fetch — used internally (update/delete/pin ownership checks,
      * sharePost's source lookup) and by the {@code GET /api/posts/{id}} endpoint,
@@ -89,6 +118,34 @@ public class PostService {
     public Post getPost(String id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found: " + id));
+    }
+
+    /** Public single-item reads hide inaccessible posts as not found. */
+    public Post getVisiblePost(String id, String viewerId) {
+        Post post = getPost(id);
+        if (!canView(post, blankToNull(viewerId))) {
+            throw new ResourceNotFoundException("Post not found");
+        }
+        return post;
+    }
+
+    /** Public batch reads return only items the current viewer may read. */
+    public List<Post> getVisiblePostsByIds(List<String> ids, String viewerId) {
+        String viewer = blankToNull(viewerId);
+        return postRepository.findByIdIn(ids).stream()
+                .filter(post -> canView(post, viewer))
+                .toList();
+    }
+
+    /** Private Feign endpoint used by comment-service to enforce current post privacy. */
+    public ContentAccessResponse commentAccess(String id, String viewerId) {
+        return postRepository.findById(id)
+                .map(post -> new ContentAccessResponse(true, canView(post, blankToNull(viewerId)), post.getAuthorId()))
+                .orElseGet(() -> new ContentAccessResponse(false, false, null));
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     public Post updatePost(String id, UpdatePostRequest request) {
@@ -183,7 +240,10 @@ public class PostService {
         if (query == null || query.isBlank()) {
             throw new BadRequestException("Search query must not be blank");
         }
-        return postRepository.findByContentContainingIgnoreCaseAndPrivacy(query, Privacy.PUBLIC, pageable);
+        // PUBLIC post privacy does not make a private group's content public.
+        // Search-service does not propagate a viewer, so this route remains anonymous-safe.
+        return filterVisible(postRepository.findByContentContainingIgnoreCaseAndPrivacy(
+                query, Privacy.PUBLIC, pageable), null);
     }
 
     /** Share/repost — creates a new post that references the original; original.shareCount is incremented. */
@@ -292,15 +352,18 @@ public class PostService {
 
     /** Author always sees their own post regardless of privacy. */
     private boolean canView(Post post, String viewerId) {
-        if (viewerId != null && post.getAuthorId().equals(viewerId)) {
-            return true;
+        boolean privacyAllows = viewerId != null && post.getAuthorId().equals(viewerId)
+                || switch (post.getPrivacy()) {
+                    case PUBLIC -> true;
+                    case PRIVATE -> false;
+                    case FRIENDS -> viewerId != null && userServiceClient.getFriendIds(post.getAuthorId()).contains(viewerId);
+                    case CUSTOM -> viewerId != null && post.getCustomAudienceUserIds().contains(viewerId);
+                };
+        if (!privacyAllows) {
+            return false;
         }
-        return switch (post.getPrivacy()) {
-            case PUBLIC -> true;
-            case PRIVATE -> false;
-            case FRIENDS -> viewerId != null && userServiceClient.getFriendIds(post.getAuthorId()).contains(viewerId);
-            case CUSTOM -> viewerId != null && post.getCustomAudienceUserIds().contains(viewerId);
-        };
+        return post.getGroupId() == null || post.getGroupId().isBlank()
+                || groupAuthorizationClient.canViewContent(post.getGroupId(), viewerId == null ? "" : viewerId);
     }
 
     /**

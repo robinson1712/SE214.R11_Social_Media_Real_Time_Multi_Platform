@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: cloud-free
+  data:
+    redis:
+      host: ${CLOUD_REDIS_HOST}
+      port: ${CLOUD_REDIS_PORT:6379}
+      username: ${CLOUD_REDIS_USERNAME:default}
+      password: ${CLOUD_REDIS_PASSWORD}
+      ssl:
+        enabled: ${CLOUD_REDIS_SSL_ENABLED:true}
+      connect-timeout: 10s
+      timeout: 10s
+server:
+  address: 127.0.0.1
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3001}
+  security:
+    trusted-proxies: ${TRUSTED_PROXY_IPS:127.0.0.1,::1}

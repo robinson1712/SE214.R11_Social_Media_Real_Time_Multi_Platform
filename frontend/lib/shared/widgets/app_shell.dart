@@ -71,9 +71,9 @@ class AppShell extends ConsumerWidget {
               icon: const Icon(Icons.search),
               onPressed: () => showDialog(
                 context: context,
-                builder: (_) => Dialog(
+                builder: (_) => const Dialog(
                   child: Padding(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(12),
                     child: SearchBarWidget(),
                   ),
                 ),
@@ -438,28 +438,21 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
-  final bool comingSoon;
   final int badgeCount;
 
   const _NavItem({
     required this.icon,
     required this.label,
     this.onTap,
-    this.comingSoon = false,
     this.badgeCount = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: comingSoon ? Colors.grey.shade400 : null),
-      title: Text(
-        label,
-        style: comingSoon ? TextStyle(color: Colors.grey.shade400) : null,
-      ),
-      trailing: comingSoon
-          ? Text('Sắp có', style: TextStyle(fontSize: 11, color: Colors.grey.shade400))
-          : badgeCount > 0
+      leading: Icon(icon),
+      title: Text(label),
+      trailing: badgeCount > 0
               ? Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
@@ -471,7 +464,6 @@ class _NavItem extends StatelessWidget {
                   ),
                 )
               : null,
-      enabled: !comingSoon,
       onTap: onTap,
     );
   }

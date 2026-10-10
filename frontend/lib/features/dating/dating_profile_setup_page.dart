@@ -85,7 +85,7 @@ class _DatingProfileSetupPageState extends ConsumerState<DatingProfileSetupPage>
             padding: const EdgeInsets.all(16),
             children: [
               DropdownButtonFormField<Gender>(
-                value: _gender,
+                initialValue: _gender,
                 decoration: const InputDecoration(labelText: 'Giới tính của bạn'),
                 items: const [
                   DropdownMenuItem(value: Gender.male, child: Text('Nam')),
@@ -123,7 +123,7 @@ class _DatingProfileSetupPageState extends ConsumerState<DatingProfileSetupPage>
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<GenderPreference>(
-                value: _genderPreference,
+                initialValue: _genderPreference,
                 decoration: const InputDecoration(labelText: 'Tôi muốn tìm'),
                 items: GenderPreference.values
                     .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))

@@ -2,6 +2,7 @@ package com.socialapp.reaction.service;
 
 import com.socialapp.common.enums.ReactionType;
 import com.socialapp.common.enums.TargetType;
+import com.socialapp.common.dto.ContentAccessResponse;
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.ReactionEvent;
 import com.socialapp.common.exception.BadRequestException;
@@ -26,7 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +44,8 @@ class ReactionServiceTest {
 
     @Mock
     private ReactionRepository reactionRepository;
+    @Mock
+    private ReactionTargetAccessService targetAccessService;
 
     private KafkaTemplate<String, Object> kafkaTemplate;
     private ReactionService reactionService;
@@ -48,7 +53,9 @@ class ReactionServiceTest {
     @BeforeEach
     void setUp() {
         kafkaTemplate = mock(KafkaTemplate.class);
-        reactionService = new ReactionService(reactionRepository, kafkaTemplate);
+        reactionService = new ReactionService(reactionRepository, kafkaTemplate, targetAccessService);
+        lenient().when(targetAccessService.requireReadable(any(), anyString(), any()))
+                .thenReturn(new ContentAccessResponse(true, true, "post-owner-1"));
     }
 
     @AfterEach
@@ -70,7 +77,7 @@ class ReactionServiceTest {
     @Test
     void upsert_noExistingReaction_createsNewRowAndPublishesNotRemoved() {
         CurrentUserContext.setForTests("user-1", List.of("USER"));
-        UpsertReactionRequest request = new UpsertReactionRequest(TargetType.POST, "post-1", "post-owner-1", ReactionType.LIKE);
+        UpsertReactionRequest request = new UpsertReactionRequest(TargetType.POST, "post-1", "forged-owner", ReactionType.LIKE);
         when(reactionRepository.findByTargetTypeAndTargetIdAndUserId(TargetType.POST, "post-1", "user-1"))
                 .thenReturn(Optional.empty());
         when(reactionRepository.save(any(Reaction.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -96,7 +103,7 @@ class ReactionServiceTest {
     void upsert_existingReaction_updatesTypeInPlaceRatherThanCreatingNewRow() {
         CurrentUserContext.setForTests("user-1", List.of("USER"));
         Reaction existing = existingReaction("reaction-1", "user-1", ReactionType.LIKE);
-        UpsertReactionRequest request = new UpsertReactionRequest(TargetType.POST, "post-1", "post-owner-1", ReactionType.LOVE);
+        UpsertReactionRequest request = new UpsertReactionRequest(TargetType.POST, "post-1", "forged-owner", ReactionType.LOVE);
         when(reactionRepository.findByTargetTypeAndTargetIdAndUserId(TargetType.POST, "post-1", "user-1"))
                 .thenReturn(Optional.of(existing));
         when(reactionRepository.save(any(Reaction.class))).thenAnswer(inv -> inv.getArgument(0));

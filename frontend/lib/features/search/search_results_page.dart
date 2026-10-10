@@ -42,7 +42,7 @@ class SearchResultsPage extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 children: [
                   if (results.users.isNotEmpty) ...[
-                    _SectionHeader('Mọi người'),
+                    const _SectionHeader('Mọi người'),
                     ...results.users.map((u) => Card(
                           margin: const EdgeInsets.only(bottom: 6),
                           child: ListTile(
@@ -53,7 +53,7 @@ class SearchResultsPage extends ConsumerWidget {
                         )),
                   ],
                   if (results.groups.isNotEmpty) ...[
-                    _SectionHeader('Nhóm'),
+                    const _SectionHeader('Nhóm'),
                     ...results.groups.map((g) => Card(
                           margin: const EdgeInsets.only(bottom: 6),
                           child: ListTile(
@@ -65,7 +65,7 @@ class SearchResultsPage extends ConsumerWidget {
                         )),
                   ],
                   if (results.pages.isNotEmpty) ...[
-                    _SectionHeader('Trang'),
+                    const _SectionHeader('Trang'),
                     ...results.pages.map((p) => Card(
                           margin: const EdgeInsets.only(bottom: 6),
                           child: ListTile(
@@ -77,7 +77,7 @@ class SearchResultsPage extends ConsumerWidget {
                         )),
                   ],
                   if (results.posts.isNotEmpty) ...[
-                    _SectionHeader('Bài viết'),
+                    const _SectionHeader('Bài viết'),
                     ...results.posts.map((p) => Card(
                           margin: const EdgeInsets.only(bottom: 6),
                           child: ListTile(

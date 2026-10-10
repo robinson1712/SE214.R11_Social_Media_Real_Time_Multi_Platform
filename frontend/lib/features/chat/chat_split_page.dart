@@ -67,7 +67,7 @@ class ChatSplitPage extends StatelessWidget {
 
   Widget _buildNarrow(BuildContext context) {
     if (conversationId == null) {
-      return SafeArea(child: ConversationListPanel(selectedConversationId: null));
+      return const SafeArea(child: ConversationListPanel(selectedConversationId: null));
     }
     return ColoredBox(
       color: Colors.white,

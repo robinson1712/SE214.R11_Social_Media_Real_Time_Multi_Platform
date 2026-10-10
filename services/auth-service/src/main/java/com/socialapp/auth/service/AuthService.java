@@ -1,6 +1,6 @@
 package com.socialapp.auth.service;
 
-import com.socialapp.auth.config.AdminEmailAllowlist;
+import com.socialapp.auth.config.AdminBootstrapToken;
 import com.socialapp.auth.dto.AccessTokenResponse;
 import com.socialapp.auth.dto.AccountResponse;
 import com.socialapp.auth.dto.AuthResponse;
@@ -19,10 +19,14 @@ import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.exception.UnauthorizedException;
 import com.socialapp.common.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -30,6 +34,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final AccountRepository accountRepository;
@@ -37,17 +42,34 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final AdminEmailAllowlist adminEmailAllowlist;
+    private final AdminBootstrapToken adminBootstrapToken;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        return createAccount(request, List.of("USER"));
+    }
+
+    /**
+     * Creates the first administrator through a one-time operator-only path.
+     * SERIALIZABLE protects the empty-admin check when multiple instances share a database.
+     */
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public AuthResponse bootstrapAdmin(RegisterRequest request, String suppliedToken) {
+        if (!adminBootstrapToken.matches(suppliedToken)) {
+            throw new UnauthorizedException("Invalid admin bootstrap token");
+        }
+        if (accountRepository.countByRole("ADMIN") > 0) {
+            throw new ConflictException("Admin bootstrap has already been completed");
+        }
+        AuthResponse response = createAccount(request, List.of("USER", "ADMIN"));
+        afterCommit(() -> log.info("Initial admin bootstrap completed for accountId={}", response.accountId()));
+        return response;
+    }
+
+    private AuthResponse createAccount(RegisterRequest request, List<String> roles) {
         if (accountRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already in use");
         }
-
-        List<String> roles = adminEmailAllowlist.isAdmin(request.email())
-                ? List.of("USER", "ADMIN")
-                : List.of("USER");
 
         Account account = Account.builder()
                 .email(request.email())
@@ -59,11 +81,26 @@ public class AuthService {
                 .build();
         account = accountRepository.save(account);
 
-        kafkaTemplate.send(KafkaTopics.USER_REGISTERED,
-                new UserRegisteredEvent(account.getId(), account.getEmail(), account.getFullName(),
-                        request.gender(), request.dob(), Instant.now()));
+        UserRegisteredEvent event = new UserRegisteredEvent(account.getId(), account.getEmail(), account.getFullName(),
+                request.gender(), request.dob(), Instant.now());
+        afterCommit(() -> kafkaTemplate.send(KafkaTopics.USER_REGISTERED, event));
 
         return issueTokens(account);
+    }
+
+    // A failed SERIALIZABLE commit must not publish a user that never existed.
+    // This does not replace a durable outbox: delivery after a process crash still needs one.
+    private void afterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            action.run();
+        }
     }
 
     @Transactional
@@ -93,6 +130,9 @@ public class AuthService {
         Account account = accountRepository.findById(tokenRow.getAccountId())
                 .orElseThrow(() -> new UnauthorizedException("Account not found"));
 
+        if (account.getStatus() == AccountStatus.BANNED) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
         String accessToken = jwtTokenProvider.generateAccessToken(account.getId(), account.getRoles());
         return new AccessTokenResponse(accessToken);
     }

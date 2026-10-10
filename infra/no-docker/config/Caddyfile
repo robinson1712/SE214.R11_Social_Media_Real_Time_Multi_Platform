@@ -1,0 +1,19 @@
+:3001 {
+	@gateway path /api/* /ws /ws/* /ws-notifications /ws-notifications/* /swagger-ui.html /swagger-ui/* /webjars/* /v3/api-docs/* /docs/*
+	handle @gateway {
+		reverse_proxy {$GATEWAY_UPSTREAM:127.0.0.1:8080} {
+			# Replace client-controlled forwarding metadata at the trusted edge.
+			header_up X-Forwarded-For {http.request.remote.host}
+			header_up X-Real-IP {http.request.remote.host}
+			header_up -Forwarded
+		}
+	}
+
+	# SPA fallback must never rewrite API/WS paths before the proxy matches them.
+	handle {
+		root * {$FRONTEND_ROOT}
+		header Cache-Control "no-cache, no-store, must-revalidate"
+		try_files {path} {path}/ /index.html
+		file_server
+	}
+}
