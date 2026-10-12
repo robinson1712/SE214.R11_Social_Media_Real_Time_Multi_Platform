@@ -1,0 +1,18 @@
+# Dependencies and generated Next.js output
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local environment; only a value-free example may be committed
+.env*
+!.env.example
+
+# Generated Python/browser-check output
+__pycache__/
+*.py[cod]
+/screenshots/
+/tests/next_results.json
+*.log

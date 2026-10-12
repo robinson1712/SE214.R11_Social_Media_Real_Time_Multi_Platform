@@ -1,0 +1,61 @@
+{
+  "base_url": "http://127.0.0.1:3001",
+  "results": [
+    {
+      "test": "navigation",
+      "status": "PASS",
+      "seconds": 8.67
+    },
+    {
+      "test": "discussions",
+      "status": "PASS",
+      "seconds": 3.97
+    },
+    {
+      "test": "reactions_and_posts",
+      "status": "PASS",
+      "seconds": 10.72
+    },
+    {
+      "test": "post_interactions",
+      "status": "PASS",
+      "seconds": 21.83
+    },
+    {
+      "test": "locations_and_emoji",
+      "status": "PASS",
+      "seconds": 18.2
+    },
+    {
+      "test": "attachments",
+      "status": "PASS",
+      "seconds": 4.86
+    },
+    {
+      "test": "motion_and_lifecycle",
+      "status": "PASS",
+      "seconds": 7.51
+    },
+    {
+      "test": "stories",
+      "status": "PASS",
+      "seconds": 21.84
+    },
+    {
+      "test": "redirects_and_missing",
+      "status": "PASS",
+      "seconds": 4.56
+    },
+    {
+      "test": "ui_ux",
+      "status": "PASS",
+      "seconds": 16.99
+    },
+    {
+      "test": "matrix",
+      "status": "FAIL",
+      "error": "composer minimized after hydration: timed out after 5s; last=False",
+      "seconds": 67.45
+    }
+  ]
+}

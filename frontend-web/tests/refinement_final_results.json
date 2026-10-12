@@ -1,0 +1,20 @@
+{
+  "base_url": "http://127.0.0.1:3001",
+  "results": [
+    {
+      "test": "reactions_and_posts",
+      "status": "PASS",
+      "seconds": 10.72
+    },
+    {
+      "test": "post_interactions",
+      "status": "PASS",
+      "seconds": 21.73
+    },
+    {
+      "test": "matrix",
+      "status": "PASS",
+      "seconds": 135.25
+    }
+  ]
+}

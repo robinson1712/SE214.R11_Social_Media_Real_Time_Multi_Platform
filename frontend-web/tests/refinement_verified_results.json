@@ -1,0 +1,22 @@
+{
+  "base_url": "http://127.0.0.1:3001",
+  "verification": "Combined functional run and final affected-group rerun; not a single uninterrupted full-suite pass",
+  "functional_groups_passed": 10,
+  "matrix_cases_passed": 140,
+  "matrix_cases_total": 140,
+  "extra_rail_checks_passed": 4,
+  "extra_rail_checks_total": 4,
+  "results": [
+    { "test": "navigation", "status": "PASS", "evidence": "refinement_qa_first_failure_results.json", "seconds": 8.67 },
+    { "test": "discussions", "status": "PASS", "evidence": "refinement_qa_first_failure_results.json", "seconds": 3.97 },
+    { "test": "reactions_and_posts", "status": "PASS", "evidence": "refinement_final_results.json", "seconds": 10.72 },
+    { "test": "post_interactions", "status": "PASS", "evidence": "refinement_final_results.json", "seconds": 21.73 },
+    { "test": "locations_and_emoji", "status": "PASS", "evidence": "refinement_qa_first_failure_results.json", "seconds": 18.2 },
+    { "test": "attachments", "status": "PASS", "evidence": "refinement_qa_first_failure_results.json", "seconds": 4.86 },
+    { "test": "motion_and_lifecycle", "status": "PASS", "evidence": "refinement_qa_first_failure_results.json", "seconds": 7.51 },
+    { "test": "stories", "status": "PASS", "evidence": "refinement_qa_first_failure_results.json", "seconds": 21.84 },
+    { "test": "redirects_and_missing", "status": "PASS", "evidence": "refinement_qa_first_failure_results.json", "seconds": 4.56 },
+    { "test": "ui_ux", "status": "PASS", "evidence": "refinement_qa_first_failure_results.json", "seconds": 16.99 },
+    { "test": "matrix", "status": "PASS", "evidence": "refinement_final_results.json", "log": "refinement_final_qa.log", "seconds": 135.25 }
+  ]
+}

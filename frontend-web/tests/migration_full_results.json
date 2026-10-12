@@ -1,0 +1,91 @@
+{
+  "base_url": "http://127.0.0.1:3002",
+  "results": [
+    {
+      "test": "navigation",
+      "status": "PASS",
+      "seconds": 12.03
+    },
+    {
+      "test": "discussions",
+      "status": "PASS",
+      "seconds": 4.91
+    },
+    {
+      "test": "reactions_and_posts",
+      "status": "PASS",
+      "seconds": 11.8
+    },
+    {
+      "test": "post_interactions",
+      "status": "PASS",
+      "seconds": 25.03
+    },
+    {
+      "test": "locations_and_emoji",
+      "status": "PASS",
+      "seconds": 18.0
+    },
+    {
+      "test": "attachments",
+      "status": "PASS",
+      "seconds": 6.67
+    },
+    {
+      "test": "motion_and_lifecycle",
+      "status": "PASS",
+      "seconds": 7.08
+    },
+    {
+      "test": "stories",
+      "status": "PASS",
+      "seconds": 21.75
+    },
+    {
+      "test": "redirects_and_missing",
+      "status": "PASS",
+      "seconds": 5.98
+    },
+    {
+      "test": "ui_ux",
+      "status": "PASS",
+      "seconds": 17.53
+    },
+    {
+      "test": "matrix",
+      "status": "PASS",
+      "seconds": 147.0
+    },
+    {
+      "test": "persistence",
+      "status": "FAIL",
+      "error": "sent message survives reload: timed out after 5s; last=False",
+      "seconds": 17.3
+    },
+    {
+      "test": "message_drafts",
+      "status": "PASS",
+      "seconds": 3.73
+    },
+    {
+      "test": "content_controls",
+      "status": "PASS",
+      "seconds": 11.0
+    },
+    {
+      "test": "storage_safety",
+      "status": "PASS",
+      "seconds": 3.31
+    },
+    {
+      "test": "storage_failures",
+      "status": "PASS",
+      "seconds": 8.06
+    },
+    {
+      "test": "notifications",
+      "status": "PASS",
+      "seconds": 11.09
+    }
+  ]
+}
