@@ -9,11 +9,7 @@ import com.socialapp.media.dto.UploadResponse;
 import com.socialapp.media.entity.MediaFile;
 import com.socialapp.media.entity.MediaPurpose;
 import com.socialapp.media.repository.MediaFileRepository;
-import io.minio.MinioClient;
-import io.minio.ObjectWriteResponse;
-import io.minio.PutObjectArgs;
-import io.minio.RemoveObjectArgs;
-import io.minio.errors.ErrorResponseException;
+import com.socialapp.media.storage.ObjectStorageClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,13 +20,16 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,7 +46,7 @@ class MediaServiceTest {
     private static final String PUBLIC_ENDPOINT = "http://localhost:9000";
 
     @Mock
-    private MinioClient minioClient;
+    private ObjectStorageClient objectStorageClient;
     @Mock
     private MediaFileRepository mediaFileRepository;
 
@@ -55,7 +54,7 @@ class MediaServiceTest {
 
     @BeforeEach
     void setUp() {
-        mediaService = new MediaService(minioClient, mediaFileRepository);
+        mediaService = new MediaService(objectStorageClient, mediaFileRepository);
         ReflectionTestUtils.setField(mediaService, "publicEndpoint", PUBLIC_ENDPOINT);
         ReflectionTestUtils.setField(mediaService, "bucket", BUCKET);
     }
@@ -78,23 +77,22 @@ class MediaServiceTest {
     @Test
     void upload_authenticatedWithFile_putsObjectAndSavesRow() throws Exception {
         MultipartFile file = new MockMultipartFile("file", "photo.png", "image/png", "hello".getBytes());
-        when(minioClient.putObject(any(PutObjectArgs.class))).thenReturn(mock(ObjectWriteResponse.class));
         when(mediaFileRepository.save(any(MediaFile.class))).thenAnswer(inv -> inv.getArgument(0));
 
         UploadResponse response = mediaService.upload("user-1", file, "avatar");
 
-        ArgumentCaptor<PutObjectArgs> putCaptor = ArgumentCaptor.forClass(PutObjectArgs.class);
-        verify(minioClient).putObject(putCaptor.capture());
-        assertThat(putCaptor.getValue().bucket()).isEqualTo(BUCKET);
-        assertThat(putCaptor.getValue().object()).startsWith("AVATAR/user-1/");
-        assertThat(putCaptor.getValue().object()).endsWith("-photo.png");
+        ArgumentCaptor<String> objectKeyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(objectStorageClient).putObject(eq(BUCKET), objectKeyCaptor.capture(), any(InputStream.class),
+                eq(file.getSize()), eq(file.getContentType()));
+        assertThat(objectKeyCaptor.getValue()).startsWith("AVATAR/user-1/");
+        assertThat(objectKeyCaptor.getValue()).endsWith("-photo.png");
 
         ArgumentCaptor<MediaFile> saveCaptor = ArgumentCaptor.forClass(MediaFile.class);
         verify(mediaFileRepository).save(saveCaptor.capture());
         assertThat(saveCaptor.getValue().getOwnerId()).isEqualTo("user-1");
         assertThat(saveCaptor.getValue().getPurpose()).isEqualTo(MediaPurpose.AVATAR);
-        assertThat(saveCaptor.getValue().getObjectKey()).isEqualTo(putCaptor.getValue().object());
-        assertThat(saveCaptor.getValue().getUrl()).isEqualTo(PUBLIC_ENDPOINT + "/" + BUCKET + "/" + putCaptor.getValue().object());
+        assertThat(saveCaptor.getValue().getObjectKey()).isEqualTo(objectKeyCaptor.getValue());
+        assertThat(saveCaptor.getValue().getUrl()).isEqualTo(PUBLIC_ENDPOINT + "/" + BUCKET + "/" + objectKeyCaptor.getValue());
 
         assertThat(response.url()).isEqualTo(saveCaptor.getValue().getUrl());
     }
@@ -102,7 +100,6 @@ class MediaServiceTest {
     @Test
     void upload_purposeIsCaseInsensitiveAndTrimmed() throws Exception {
         MultipartFile file = new MockMultipartFile("file", "pic.jpg", "image/jpeg", "data".getBytes());
-        when(minioClient.putObject(any(PutObjectArgs.class))).thenReturn(mock(ObjectWriteResponse.class));
         when(mediaFileRepository.save(any(MediaFile.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mediaService.upload("user-1", file, "  post ");
@@ -115,15 +112,15 @@ class MediaServiceTest {
     @Test
     void upload_sanitizesUnsafeCharactersInFilename() throws Exception {
         MultipartFile file = new MockMultipartFile("file", "my photo!@#.png", "image/png", "hello".getBytes());
-        when(minioClient.putObject(any(PutObjectArgs.class))).thenReturn(mock(ObjectWriteResponse.class));
         when(mediaFileRepository.save(any(MediaFile.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mediaService.upload("user-1", file, "post");
 
-        ArgumentCaptor<PutObjectArgs> putCaptor = ArgumentCaptor.forClass(PutObjectArgs.class);
-        verify(minioClient).putObject(putCaptor.capture());
-        assertThat(putCaptor.getValue().object()).doesNotContain(" ", "!", "@", "#");
-        assertThat(putCaptor.getValue().object()).endsWith("-my_photo___.png");
+        ArgumentCaptor<String> objectKeyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(objectStorageClient).putObject(eq(BUCKET), objectKeyCaptor.capture(), any(InputStream.class),
+                eq(file.getSize()), eq(file.getContentType()));
+        assertThat(objectKeyCaptor.getValue()).doesNotContain(" ", "!", "@", "#");
+        assertThat(objectKeyCaptor.getValue()).endsWith("-my_photo___.png");
     }
 
     @Test
@@ -133,7 +130,7 @@ class MediaServiceTest {
         assertThatThrownBy(() -> mediaService.upload(null, file, "avatar"))
                 .isInstanceOf(UnauthorizedException.class);
 
-        verify(minioClient, never()).putObject(any());
+        verify(objectStorageClient, never()).putObject(any(), any(), any(), anyLong(), any());
         verify(mediaFileRepository, never()).save(any());
     }
 
@@ -169,7 +166,7 @@ class MediaServiceTest {
         assertThatThrownBy(() -> mediaService.upload("user-1", file, "post"))
                 .isInstanceOf(BadRequestException.class);
 
-        verify(minioClient, never()).putObject(any());
+        verify(objectStorageClient, never()).putObject(any(), any(), any(), anyLong(), any());
         verify(mediaFileRepository, never()).save(any());
     }
 
@@ -184,12 +181,12 @@ class MediaServiceTest {
     @Test
     void upload_videoForVideoCapablePurpose_isAllowed() throws Exception {
         MultipartFile file = new MockMultipartFile("file", "clip.mp4", "video/mp4", "hello".getBytes());
-        when(minioClient.putObject(any(PutObjectArgs.class))).thenReturn(mock(ObjectWriteResponse.class));
         when(mediaFileRepository.save(any(MediaFile.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mediaService.upload("user-1", file, "reel");
 
-        verify(minioClient).putObject(any(PutObjectArgs.class));
+        verify(objectStorageClient).putObject(eq(BUCKET), any(), any(InputStream.class),
+                eq(file.getSize()), eq(file.getContentType()));
     }
 
     @Test
@@ -212,7 +209,8 @@ class MediaServiceTest {
     @Test
     void upload_minioPutObjectThrows_wrapsAsBadRequestAndNeverSaves() throws Exception {
         MultipartFile file = new MockMultipartFile("file", "photo.png", "image/png", "hello".getBytes());
-        when(minioClient.putObject(any(PutObjectArgs.class))).thenThrow(mock(ErrorResponseException.class));
+        doThrow(new RuntimeException("storage unavailable")).when(objectStorageClient)
+                .putObject(any(), any(), any(), anyLong(), any());
 
         assertThatThrownBy(() -> mediaService.upload("user-1", file, "avatar"))
                 .isInstanceOf(BadRequestException.class);
@@ -229,10 +227,7 @@ class MediaServiceTest {
 
         mediaService.delete("user-1", "media-1");
 
-        ArgumentCaptor<RemoveObjectArgs> removeCaptor = ArgumentCaptor.forClass(RemoveObjectArgs.class);
-        verify(minioClient).removeObject(removeCaptor.capture());
-        assertThat(removeCaptor.getValue().bucket()).isEqualTo(BUCKET);
-        assertThat(removeCaptor.getValue().object()).isEqualTo("AVATAR/user-1/abc-photo.png");
+        verify(objectStorageClient).removeObject(BUCKET, "AVATAR/user-1/abc-photo.png");
 
         verify(mediaFileRepository).delete(file);
     }
@@ -245,7 +240,7 @@ class MediaServiceTest {
         assertThatThrownBy(() -> mediaService.delete("user-2", "media-1"))
                 .isInstanceOf(ForbiddenException.class);
 
-        verify(minioClient, never()).removeObject(any());
+        verify(objectStorageClient, never()).removeObject(any(), any());
         verify(mediaFileRepository, never()).delete(any());
     }
 
@@ -269,7 +264,7 @@ class MediaServiceTest {
     void delete_minioRemoveObjectThrows_wrapsAsBadRequestAndNeverDeletesRow() throws Exception {
         MediaFile file = mediaFile("media-1", "user-1", "AVATAR/user-1/abc-photo.png");
         when(mediaFileRepository.findById("media-1")).thenReturn(Optional.of(file));
-        org.mockito.Mockito.doThrow(mock(ErrorResponseException.class)).when(minioClient).removeObject(any(RemoveObjectArgs.class));
+        doThrow(new RuntimeException("storage unavailable")).when(objectStorageClient).removeObject(any(), any());
 
         assertThatThrownBy(() -> mediaService.delete("user-1", "media-1"))
                 .isInstanceOf(BadRequestException.class);

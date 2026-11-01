@@ -4,6 +4,7 @@ import com.socialapp.comment.dto.CreateCommentRequest;
 import com.socialapp.comment.dto.UpdateCommentRequest;
 import com.socialapp.comment.entity.Comment;
 import com.socialapp.comment.repository.CommentRepository;
+import com.socialapp.common.dto.ContentAccessResponse;
 import com.socialapp.common.enums.TargetType;
 import com.socialapp.common.event.CommentCreatedEvent;
 import com.socialapp.common.event.KafkaTopics;
@@ -18,7 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,21 +33,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for CommentService. Kafka publishing is mocked; CurrentUserContext
  * is set/cleared per test via the test-support seam in common-lib rather than a
- * real HTTP request. The service no longer calls out to post-service (the
- * caller supplies targetOwnerId directly, same simplification reaction-service
- * already made — see Reaction.java), so there's no Feign client left to mock.
+ * real HTTP request. Target authorization and owner IDs are supplied by the
+ * mocked access-service seam rather than by direct HTTP calls in these tests.
  */
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
+    @Mock
+    private CommentTargetAccessService targetAccessService;
 
     private KafkaTemplate<String, Object> kafkaTemplate;
     private CommentService commentService;
@@ -51,7 +57,9 @@ class CommentServiceTest {
     @BeforeEach
     void setUp() {
         kafkaTemplate = mock(KafkaTemplate.class);
-        commentService = new CommentService(commentRepository, kafkaTemplate);
+        commentService = new CommentService(commentRepository, kafkaTemplate, targetAccessService);
+        lenient().when(targetAccessService.requireReadable(any(), any(), any()))
+                .thenReturn(new ContentAccessResponse(true, true, "post-owner-1"));
     }
 
     @AfterEach
@@ -130,6 +138,8 @@ class CommentServiceTest {
         CurrentUserContext.setForTests("author-2", List.of("USER"));
         CreateCommentRequest request = new CreateCommentRequest(
                 TargetType.POST, "post-1", "post-owner-1", "A reply", "parent-comment-1");
+        when(commentRepository.findByIdAndDeletedFalse("parent-comment-1"))
+                .thenReturn(Optional.of(existingComment("parent-comment-1", "parent-author", "post-1")));
         when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Comment saved = commentService.createComment(request);
@@ -189,6 +199,79 @@ class CommentServiceTest {
                 .isInstanceOf(BadRequestException.class);
 
         verify(commentRepository, never()).save(any());
+    }
+
+    @Test
+    void createComment_parentOnDifferentTarget_rejectedWithoutSaveOrEvent() {
+        CurrentUserContext.setForTests("author-2", List.of("USER"));
+        when(commentRepository.findByIdAndDeletedFalse("parent-1"))
+                .thenReturn(Optional.of(existingComment("parent-1", "parent-author", "other-post")));
+        CreateCommentRequest request = new CreateCommentRequest(
+                TargetType.POST, "post-1", "post-owner-1", "cross-target reply", "parent-1");
+
+        assertThatThrownBy(() -> commentService.createComment(request)).isInstanceOf(BadRequestException.class);
+
+        verify(commentRepository, never()).save(any());
+        verify(kafkaTemplate, never()).send(any(), any(), any());
+    }
+
+    @Test
+    void createComment_privateTargetAfterPermissionRevoked_rejectedWithoutSaveOrEvent() {
+        CurrentUserContext.setForTests("former-friend", List.of("USER"));
+        Mockito.doThrow(new ForbiddenException("no longer visible"))
+                .when(targetAccessService).requireReadable(TargetType.POST, "post-1", "former-friend");
+
+        assertThatThrownBy(() -> commentService.createComment(new CreateCommentRequest(
+                TargetType.POST, "post-1", "post-owner-1", "late comment", null)))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(commentRepository, never()).save(any());
+        verify(kafkaTemplate, never()).send(any(), any(), any());
+    }
+
+    @Test
+    void getTopLevelComments_privateTargetAfterPermissionRevoked_doesNotReadComments() {
+        CurrentUserContext.setForTests("former-friend", List.of("USER"));
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        Mockito.doThrow(new ForbiddenException("no longer visible"))
+                .when(targetAccessService).requireReadable(TargetType.POST, "post-1", "former-friend");
+
+        assertThatThrownBy(() -> commentService.getTopLevelComments(TargetType.POST, "post-1", pageable))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(commentRepository, never()).findByTargetTypeAndTargetIdAndParentCommentIdIsNullAndDeletedFalseOrderByCreatedAtDesc(
+                any(), any(), any());
+    }
+
+    @Test
+    void getReplies_privateParentAfterPermissionRevoked_doesNotReadReplies() {
+        CurrentUserContext.setForTests("former-friend", List.of("USER"));
+        when(commentRepository.findByIdAndDeletedFalse("parent-1"))
+                .thenReturn(Optional.of(existingComment("parent-1", "author-1", "post-1")));
+        Mockito.doThrow(new ForbiddenException("no longer visible"))
+                .when(targetAccessService).requireReadable(TargetType.POST, "post-1", "former-friend");
+
+        assertThatThrownBy(() -> commentService.getReplies("parent-1", org.springframework.data.domain.PageRequest.of(0, 20)))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(commentRepository, never())
+                .findByParentCommentIdAndTargetTypeAndTargetIdAndDeletedFalseOrderByCreatedAtAsc(any(), any(), any(), any());
+    }
+
+    @Test
+    void getReplies_accessibleParentQueriesOnlyItsMatchingTarget() {
+        CurrentUserContext.setForTests("friend-1", List.of("USER"));
+        Comment parent = existingComment("parent-1", "author-1", "post-1");
+        Comment reply = existingComment("reply-1", "friend-1", "post-1");
+        when(commentRepository.findByIdAndDeletedFalse("parent-1")).thenReturn(Optional.of(parent));
+        when(commentRepository.findByParentCommentIdAndTargetTypeAndTargetIdAndDeletedFalseOrderByCreatedAtAsc(
+                eq("parent-1"), eq(TargetType.POST), eq("post-1"), any()))
+                .thenReturn(new PageImpl<>(List.of(reply)));
+
+        var page = commentService.getReplies("parent-1", org.springframework.data.domain.PageRequest.of(0, 20));
+
+        assertThat(page.getContent()).containsExactly(reply);
+        verify(targetAccessService).requireReadable(TargetType.POST, "post-1", "friend-1");
     }
 
     @Test

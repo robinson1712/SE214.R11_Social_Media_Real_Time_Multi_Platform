@@ -2,6 +2,7 @@ package com.socialapp.post.controller;
 
 import com.socialapp.common.dto.ApiResponse;
 import com.socialapp.common.dto.PageResponse;
+import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.post.dto.CreatePostRequest;
 import com.socialapp.post.dto.ShareRequest;
 import com.socialapp.post.dto.UpdatePostRequest;
@@ -41,7 +42,7 @@ public class PostController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Post>> getPost(@PathVariable String id) {
-        return ResponseEntity.ok(ApiResponse.success(postService.getPost(id)));
+        return ResponseEntity.ok(ApiResponse.success(postService.getVisiblePost(id, CurrentUserContext.getUserId())));
     }
 
     @GetMapping("/search")
@@ -120,6 +121,6 @@ public class PostController {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
-        return ResponseEntity.ok(ApiResponse.success(postService.getPostsByIds(idList)));
+        return ResponseEntity.ok(ApiResponse.success(postService.getVisiblePostsByIds(idList, CurrentUserContext.getUserId())));
     }
 }

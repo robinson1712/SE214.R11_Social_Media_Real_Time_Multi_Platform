@@ -1,0 +1,148 @@
+{
+  "date": "2026-10-25",
+  "timezone": "Asia/Bangkok",
+  "branch": "codex/ui-backend-integration",
+  "base": "2d64d70",
+  "next": "16.4.3",
+  "frontend_unit": {
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browser_fixture": {
+    "base_url": "http://127.0.0.1:3300",
+    "fixture_url": "http://127.0.0.1:3399",
+    "live_java": false,
+    "results": [
+      {
+        "test": "test_connected_posts",
+        "status": "PASS",
+        "seconds": 6.7
+      },
+      {
+        "test": "test_connected_screens",
+        "status": "PASS",
+        "seconds": 4.38
+      },
+      {
+        "test": "test_connected_chat",
+        "status": "PASS",
+        "seconds": 8.48
+      }
+    ]
+  },
+  "backend_reactor": [
+    {
+      "suite": "com.socialapp.common.moderation.ProfanityFilterTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "com.socialapp.common.security.JwtTokenProviderTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "com.socialapp.reaction.service.ReactionServiceTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "suite": "com.socialapp.reaction.service.SavedItemServiceTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0
+    }
+  ],
+  "native_runner": {
+    "passed": 1
+  },
+  "auto_deploy": {
+    "passed": 8
+  },
+  "production_audit": {
+    "advisories": 0
+  },
+  "live_core_api": {
+    "checks": [
+      "configured native gateway health",
+      "register on real Java gateway",
+      "login and authenticated account",
+      "Kafka-created user profile",
+      "profile update",
+      "create private post with real author ID",
+      "post detail",
+      "server feed",
+      "comment owner contract",
+      "reaction and summary",
+      "saved item",
+      "real storage multipart upload",
+      "edit post with server media URL",
+      "refresh access token"
+    ]
+  },
+  "live_browser": {
+    "checks": [
+      "browser login and profile through real Java gateway",
+      "browser publishes a private post with real author ID",
+      "browser reload restores session and real persisted feed",
+      "browser settings persist to real profile service",
+      "browser logout clears authenticated UI"
+    ]
+  },
+  "live_saved_transaction": {
+    "live_java": true,
+    "checks": [
+      "save exists",
+      "unsave HTTP200",
+      "getMine is null after unsave"
+    ],
+    "old_probe_saved_rows_cleaned": 1
+  },
+  "live_mongo": {
+    "verified": false,
+    "reason": "TLS internal_error in current environment"
+  },
+  "cloud_deployed": false,
+  "native_dev_smoke": {
+    "dev_webpack_login_200": true,
+    "real_gateway_auth_json_401": true
+  },
+  "final_production_proxy": "http://127.0.0.1:18080/api/:path*",
+  "owned_native_processes_stopped": true,
+  "review_fixes": {
+    "initial_snapshot": "3e6afd6",
+    "fix_commit": "24e8e7e",
+    "findings": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5"
+    ],
+    "provider_regression": {
+      "red_failed": 6,
+      "green_passed": 6
+    },
+    "shared_post_regression": {
+      "red_failed": 2,
+      "red_passed": 1,
+      "green_passed": 3
+    },
+    "rereview_status": "F1-F5 closed within reviewed scope",
+    "live_java_rerun": false,
+    "lint_exit": 0,
+    "typecheck_exit": 0,
+    "production_build": "passed",
+    "production_gateway": "http://127.0.0.1:18080",
+    "independent_regression": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "review_thread": "01a171de-8de0-7b12-a4a6-4be8ab26281e"
+  }
+}

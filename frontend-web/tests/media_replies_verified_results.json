@@ -1,0 +1,72 @@
+{
+  "base_url": "http://127.0.0.1:3002",
+  "note": "Combined verification across runs. Attachments passed after correcting the test fixture to publish each aspect ratio separately; the composer accepts one attachment per post. No application code changed between runs.",
+  "results": [
+    {
+      "test": "navigation",
+      "status": "PASS",
+      "seconds": 8.67,
+      "source": "next_results.json"
+    },
+    {
+      "test": "discussions",
+      "status": "PASS",
+      "seconds": 3.88,
+      "source": "next_results.json"
+    },
+    {
+      "test": "reactions_and_posts",
+      "status": "PASS",
+      "seconds": 10.16,
+      "source": "next_results.json"
+    },
+    {
+      "test": "post_interactions",
+      "status": "PASS",
+      "seconds": 22.41,
+      "source": "next_results.json"
+    },
+    {
+      "test": "locations_and_emoji",
+      "status": "PASS",
+      "seconds": 17.41,
+      "source": "next_results.json"
+    },
+    {
+      "test": "attachments",
+      "status": "PASS",
+      "seconds": 6.36,
+      "source": "media_replies_attachment_results.json"
+    },
+    {
+      "test": "motion_and_lifecycle",
+      "status": "PASS",
+      "seconds": 6.61,
+      "source": "next_results.json"
+    },
+    {
+      "test": "stories",
+      "status": "PASS",
+      "seconds": 21.44,
+      "source": "next_results.json"
+    },
+    {
+      "test": "redirects_and_missing",
+      "status": "PASS",
+      "seconds": 4.27,
+      "source": "next_results.json"
+    },
+    {
+      "test": "ui_ux",
+      "status": "PASS",
+      "seconds": 16.7,
+      "source": "next_results.json"
+    },
+    {
+      "test": "matrix",
+      "status": "PASS",
+      "seconds": 137.22,
+      "source": "next_results.json"
+    }
+  ]
+}

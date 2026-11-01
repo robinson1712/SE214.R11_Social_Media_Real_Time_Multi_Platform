@@ -73,6 +73,18 @@ public class FanpageService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fanpage not found: " + id));
     }
 
+    /** Internal authorization query used by post-service before accepting a page post. */
+    public boolean canCreatePost(String pageId, String authorId) {
+        if (!fanpageRepository.existsById(pageId) || authorId == null || authorId.isBlank()) {
+            return false;
+        }
+        return pageAdminRepository.findByPageIdAndUserId(pageId, authorId)
+                .map(admin -> admin.getRole() == AdminRole.OWNER
+                        || admin.getRole() == AdminRole.ADMIN
+                        || admin.getRole() == AdminRole.EDITOR)
+                .orElse(false);
+    }
+
     public Page<Fanpage> listPages(String name, Pageable pageable) {
         if (name != null && !name.isBlank()) {
             return fanpageRepository.findByNameContainingIgnoreCase(name, pageable);

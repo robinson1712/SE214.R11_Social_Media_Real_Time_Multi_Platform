@@ -1,0 +1,11 @@
+{
+  "base_url": "http://127.0.0.1:3002",
+  "results": [
+    {
+      "test": "persistence",
+      "status": "FAIL",
+      "error": "following survives reload: timed out after 5s; last=False",
+      "seconds": 11.28
+    }
+  ]
+}

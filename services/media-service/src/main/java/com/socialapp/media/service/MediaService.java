@@ -9,9 +9,7 @@ import com.socialapp.media.dto.UploadResponse;
 import com.socialapp.media.entity.MediaFile;
 import com.socialapp.media.entity.MediaPurpose;
 import com.socialapp.media.repository.MediaFileRepository;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.RemoveObjectArgs;
+import com.socialapp.media.storage.ObjectStorageClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -65,7 +63,7 @@ public class MediaService {
     // posts/stories/reels stay image-or-video, same as before this change.
     private static final Set<MediaPurpose> ATTACHMENT_PURPOSES = EnumSet.of(MediaPurpose.CHAT);
 
-    private final MinioClient minioClient;
+    private final ObjectStorageClient objectStorageClient;
     private final MediaFileRepository mediaFileRepository;
 
     @Value("${minio.public-endpoint}")
@@ -89,12 +87,7 @@ public class MediaService {
         String objectKey = "%s/%s/%s-%s".formatted(purpose.name(), currentUserId, UUID.randomUUID(), originalFilename);
 
         try (InputStream inputStream = file.getInputStream()) {
-            minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(bucket)
-                    .object(objectKey)
-                    .stream(inputStream, file.getSize(), -1)
-                    .contentType(file.getContentType())
-                    .build());
+            objectStorageClient.putObject(bucket, objectKey, inputStream, file.getSize(), file.getContentType());
         } catch (Exception e) {
             throw new BadRequestException("Failed to upload file: " + e.getMessage());
         }
@@ -125,10 +118,7 @@ public class MediaService {
             throw new ForbiddenException("Only the owner may delete this media file");
         }
         try {
-            minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(bucket)
-                    .object(mediaFile.getObjectKey())
-                    .build());
+            objectStorageClient.removeObject(bucket, mediaFile.getObjectKey());
         } catch (Exception e) {
             throw new BadRequestException("Failed to delete file from storage: " + e.getMessage());
         }

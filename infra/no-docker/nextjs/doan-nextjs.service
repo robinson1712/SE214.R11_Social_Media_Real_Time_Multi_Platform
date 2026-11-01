@@ -1,0 +1,25 @@
+[Unit]
+Description=DoAn Next.js frontend (native Node)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=doan
+Group=doan
+WorkingDirectory=/opt/doan/ui/frontend-web
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=GATEWAY_UPSTREAM=http://127.0.0.1:8080
+ExecStart=/usr/bin/node /opt/doan/ui/infra/no-docker/nextjs/run.mjs start
+Restart=on-failure
+RestartSec=5
+KillMode=control-group
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

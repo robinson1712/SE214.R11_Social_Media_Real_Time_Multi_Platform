@@ -11,6 +11,6 @@ import java.util.List;
 @FeignClient(name = "post-service", fallbackFactory = PostClientFallbackFactory.class)
 public interface PostClient {
 
-    @GetMapping("/api/posts/batch")
-    ApiResponse<List<PostDto>> getBatch(@RequestParam("ids") String ids);
+    @GetMapping("/internal/posts/batch")
+    ApiResponse<List<PostDto>> getBatch(@RequestParam("ids") String ids, @RequestParam("viewerId") String viewerId);
 }

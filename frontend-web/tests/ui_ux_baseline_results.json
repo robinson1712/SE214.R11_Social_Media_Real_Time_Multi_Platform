@@ -1,0 +1,55 @@
+{
+  "base_url": "http://127.0.0.1:3001",
+  "results": [
+    {
+      "test": "navigation",
+      "status": "PASS",
+      "seconds": 8.78
+    },
+    {
+      "test": "discussions",
+      "status": "PASS",
+      "seconds": 4.08
+    },
+    {
+      "test": "reactions_and_posts",
+      "status": "PASS",
+      "seconds": 10.33
+    },
+    {
+      "test": "locations_and_emoji",
+      "status": "PASS",
+      "seconds": 17.55
+    },
+    {
+      "test": "attachments",
+      "status": "PASS",
+      "seconds": 4.91
+    },
+    {
+      "test": "motion_and_lifecycle",
+      "status": "PASS",
+      "seconds": 7.58
+    },
+    {
+      "test": "stories",
+      "status": "PASS",
+      "seconds": 21.78
+    },
+    {
+      "test": "redirects_and_missing",
+      "status": "PASS",
+      "seconds": 4.48
+    },
+    {
+      "test": "ui_ux",
+      "status": "PASS",
+      "seconds": 16.59
+    },
+    {
+      "test": "matrix",
+      "status": "PASS",
+      "seconds": 141.77
+    }
+  ]
+}

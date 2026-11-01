@@ -47,3 +47,6 @@ minio:
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket: social-media
+  initialize-bucket: ${MINIO_INITIALIZE_BUCKET:true}
+object-storage:
+  provider: minio

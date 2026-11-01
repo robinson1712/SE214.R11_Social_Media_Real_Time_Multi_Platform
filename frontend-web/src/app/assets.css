@@ -1,0 +1,179 @@
+/* shortcut: imagery uses the supplied reference; replace with source photos when higher resolution is available. */
+img[src="/assets/george_avatar_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'/%3E");
+  background: url("/assets/original_reference.png") 29.637097% 19.565217% /
+    3200% 2400% no-repeat;
+}
+img[src="/assets/vitaliy_avatar_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'/%3E");
+  background: url("/assets/original_reference.png") 29.637097% 64.130435% /
+    3200% 2400% no-repeat;
+}
+img[src="/assets/bogdan_photo.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1600% 1200%;
+  background-position: 16.25% 12.784091%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/splash_logo.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='66'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1600% 1163.636364%;
+  background-position: 10.833333% 12.820513%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/float_left_detail.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='52'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1969.230769% 1476.923077%;
+  background-position: 2.572016% 64.52514%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/float_right_detail.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='45' height='45'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 2275.555556% 1706.666667%;
+  background-position: 97.037794% 34.163209%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/nick_avatar_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 3200% 2400%;
+  background-position: 78.729839% 41.847826%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/brittni_avatar_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 3200% 2400%;
+  background-position: 78.729839% 47.554348%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/ivan_avatar_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 3200% 2400%;
+  background-position: 78.729839% 53.125%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/story1.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='77' height='115'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1329.87013% 667.826087%;
+  background-position: 82.470961% 19.14242%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/story2.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='77' height='115'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1329.87013% 667.826087%;
+  background-position: 91.55227% 19.14242%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/post1_photo1.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='106' height='164'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 966.037736% 468.292683%;
+  background-position: 32.026144% 39.238411%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/post1_photo2.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='106' height='164'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 966.037736% 468.292683%;
+  background-position: 43.899782% 39.238411%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/post1_photo3.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='218' height='179'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 469.724771% 486.075949%;
+  background-position: 63.523573% 37.04918%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/rec_uiux.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='77' height='78'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1329.87013% 984.615385%;
+  background-position: 82.470961% 74.202899%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/rec_music.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='77' height='78'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1329.87013% 984.615385%;
+  background-position: 91.55227% 74.202899%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/rec_cooking.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='77' height='77'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1329.87013% 997.402597%;
+  background-position: 82.470961% 86.541245%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/rec_hiking.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='77' height='77'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1329.87013% 997.402597%;
+  background-position: 91.55227% 86.541245%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/silena_avatar_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 6826.666667% 5120%;
+  background-position: 38.949455% 27.622842%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/olya_avatar_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 6826.666667% 5120%;
+  background-position: 44.895937% 27.622842%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/davis_avatar_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 6826.666667% 5120%;
+  background-position: 52.031715% 27.622842%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/app_icon.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 1600% 1200%;
+  background-position: 13.4375% 77.272727%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/app_avatar1_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 4266.666667% 3200%;
+  background-position: 11.6% 71.505376%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/app_avatar2_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='39' height='39'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 2625.641026% 1969.230769%;
+  background-position: 21.42132% 69.272977%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/app_avatar3_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 3200% 2400%;
+  background-position: 17.842742% 79.619565%;
+  background-repeat: no-repeat;
+}
+img[src="/assets/share_avatar_circle.png"] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'/%3E");
+  background-image: url("/assets/original_reference.png");
+  background-size: 4266.666667% 3200%;
+  background-position: 29.7% 87.096774%;
+  background-repeat: no-repeat;
+}

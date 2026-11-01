@@ -1,0 +1,206 @@
+.login-page {
+  --text-main: #24262c;
+  --text-sub: #686970;
+  --bg-window: #fff;
+  --nav-hover: #f5f4f2;
+  --border-subtle: #dedee3;
+  background: #fff;
+  color: #24262c;
+  outline: none;
+}
+.login-layout { min-height: 100dvh; padding: 20px; display: grid; grid-template-columns: 1.04fr 1fr; gap: 48px; }
+.login-world { --world-bg: #edf0fb; --friend-purple: #a69ae6; position: relative; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; padding: 34px 42px 26px; border-radius: 26px; background: var(--world-bg); overflow: hidden; transition: background .4s; }
+.login-world.vibe-1 { --world-bg: #f6ebef; --friend-purple: #c394d0; }
+.login-world.vibe-2 { --world-bg: #edf2e8; --friend-purple: #9ca9d2; }
+.login-brand { display: flex; align-items: center; width: fit-content; color: #24262c; text-decoration: none; font-size: 25px; letter-spacing: -1.1px; font-weight: 800; }
+.login-brand > span:not(.login-brand-mark):not(.brand-period) { font-weight: 400; }
+.login-brand .brand-period { color: #b8463b; font-size: 33px; line-height: 1; }
+.login-brand-mark { display: grid; place-items: center; width: 34px; height: 34px; margin-right: 9px; }
+.login-brand-mark svg { width: 34px; height: 34px; stroke-width: 2.3; }
+.world-content { width: 100%; max-width: 490px; margin: 24px auto; }
+.world-eyebrow { display: flex; align-items: center; gap: 9px; font-size: 10px; font-weight: 650; letter-spacing: 2px; color: #555b76; }
+.world-eyebrow > span { width: 7px; height: 7px; border-radius: 50%; background: #6f789a; box-shadow: 0 0 0 4px #6f789a13; }
+.world-content h2 { margin: 18px 0 14px; font-size: clamp(48px, 4.65vw, 67px); font-weight: 650; line-height: 1.08; letter-spacing: -3.6px; }
+.world-content h2 em { font-family: Georgia, "Times New Roman", serif; font-weight: 400; color: #ac453e; }
+.world-intro { color: #656879; font-size: 13px; line-height: 1.7; }
+.vibe-stage { position: relative; width: 100%; max-width: 440px; height: 250px; margin: 22px auto 0; }
+.stage-orbit { position: absolute; width: 340px; height: 235px; border: 1px solid #7782a21f; border-radius: 50%; left: 35px; bottom: 20px; transform: rotate(-22deg); }
+.friends-ground { position: absolute; bottom: 17px; left: 17px; width: 94%; height: 30px; border-radius: 50%; background: #4653770c; }
+.vibe-friend { position: absolute; bottom: 35px; transform-origin: bottom center; transition: background .4s, transform .28s cubic-bezier(.4, 0, .2, 1); }
+.friend-blue { width: 145px; height: 148px; left: 0; z-index: 2; background: #a3c6e6; border-radius: 75% 65% 28% 32%; transform: rotate(-7deg); }
+.friend-purple { width: 110px; height: 227px; left: 135px; background: var(--friend-purple); border-radius: 60% 48% 22% 22%; transform: rotate(5deg); }
+.friend-coral { width: 124px; height: 164px; left: 238px; z-index: 2; background: #ef9786; border-radius: 23px 23px 28px 28px; transform: rotate(-6deg); }
+.friend-yellow { width: 110px; height: 122px; left: 328px; z-index: 3; background: #edce76; border-radius: 54% 52% 44% 42%; transform: rotate(7deg); }
+.friend-hair { position: absolute; left: 50%; }
+.friend-sad .friend-hair { top: 2px; left: 28px; width: 49px; height: 20px; border-top: 7px solid #7ca9d0; border-radius: 50%; transform: rotate(-25deg); }
+.friend-anxious .friend-hair { top: -20px; width: 23px; height: 28px; border: 3px solid #8070b2; border-bottom: 0; border-radius: 60% 60% 0 0; transform: rotate(18deg); }
+.friend-anxious .friend-hair::before, .friend-anxious .friend-hair::after { content: ""; position: absolute; top: 6px; left: -15px; width: 19px; height: 23px; border: 3px solid #8070b2; border-bottom: 0; border-radius: 60% 60% 0 0; transform: rotate(-36deg); }
+.friend-anxious .friend-hair::after { left: 14px; top: 8px; transform: rotate(25deg); }
+.friend-angry .friend-hair { top: -17px; left: 31px; width: 58px; height: 27px; background: #df806e; clip-path: polygon(0 100%, 12% 32%, 31% 62%, 49% 0, 65% 52%, 87% 17%, 100% 100%); }
+.friend-joy .friend-hair { top: -7px; left: 34px; width: 43px; height: 22px; border-top: 9px solid #d3af4f; border-radius: 50%; transform: rotate(-16deg); }
+.friend-face { position: absolute; top: 45px; left: 50%; transform: translate(calc(-50% + var(--eye-x, 0px) * .6), calc(var(--eye-y, 0px) * .5)); width: 60px; height: 60px; }
+.friend-purple .friend-face { top: 49px; }
+.friend-yellow .friend-face { top: 32px; }
+.friend-brows { position: absolute; top: -12px; left: 2px; display: flex; justify-content: space-between; width: 56px; }
+.friend-brows span { width: 19px; height: 3px; border-radius: 4px; background: #30313a; }
+.friend-sad .friend-brows span:first-child { transform: rotate(-24deg); }
+.friend-sad .friend-brows span:last-child { transform: rotate(24deg); }
+.friend-anxious .friend-brows { top: -17px; }
+.friend-anxious .friend-brows span:first-child { transform: rotate(-17deg); }
+.friend-anxious .friend-brows span:last-child { transform: translateY(4px) rotate(9deg); }
+.friend-angry .friend-brows { top: -5px; }
+.friend-angry .friend-brows span { width: 23px; height: 4px; }
+.friend-angry .friend-brows span:first-child { transform: rotate(24deg); }
+.friend-angry .friend-brows span:last-child { transform: rotate(-24deg); }
+.friend-joy .friend-brows span { height: 9px; border-top: 3px solid #30313a; border-radius: 50%; background: transparent; }
+.friend-eyes { position: relative; display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 4px; }
+.friend-eyes::before, .friend-eyes::after { content: ""; position: absolute; top: calc(50% - 1.5px); left: 4px; width: 22px; height: 3px; border-radius: 4px; background: #30313a; opacity: 0; transition: opacity .26s ease; }
+.friend-eyes::after { left: auto; right: 4px; }
+.friend-eye { display: grid; place-items: center; width: 22px; height: 28px; border-radius: 50%; background: #fffaf1; overflow: hidden; transform: scaleY(1); opacity: 1; transition: transform .26s cubic-bezier(.4, 0, .2, 1), opacity .26s ease; }
+.friend-pupil { display: block; width: 7px; height: 10px; border-radius: 50%; background: #30313a; transform: translate(var(--eye-x, 0px), var(--eye-y, 0px)); opacity: 1; transition: opacity .16s ease; }
+.friend-smile { display: block; width: 17px; height: 10px; border: solid #30313a; border-width: 0 2px 2px; border-radius: 0 0 14px 14px; margin: 9px auto; overflow: hidden; opacity: 1; transform: scale(1); transition: opacity .26s ease, transform .26s cubic-bezier(.4, 0, .2, 1); }
+.friend-surprise-mouth { position: absolute; top: 32px; left: 20px; width: 20px; height: 26px; border-radius: 50%; background: #30313a; overflow: hidden; opacity: 0; transform: scale(.65); transition: opacity .26s ease, transform .26s cubic-bezier(.4, 0, .2, 1); }
+.friend-surprise-mouth::after { content: ""; position: absolute; bottom: -1px; left: 4px; width: 12px; height: 8px; border-radius: 50% 50% 0 0; background: #ed978f; }
+.friend-cheek { position: absolute; top: 33px; left: -6px; width: 14px; height: 7px; background: #e3787b55; border-radius: 50%; box-shadow: 57px 0 #e3787b55; }
+.friend-sad .friend-smile { width: 18px; height: 9px; margin-top: 13px; border-width: 2px 0 0; border-radius: 50% 50% 0 0; }
+.friend-sad .friend-cheek { top: 29px; left: 2px; width: 7px; height: 12px; border-radius: 60% 0 60% 60%; background: #6ca9d1; box-shadow: none; transform: rotate(-35deg); }
+.friend-anxious .friend-smile { width: 20px; height: 10px; border-width: 2px; border-radius: 4px; background: #fffaf1; }
+.friend-angry .friend-smile { width: 23px; height: 8px; margin-top: 12px; border-width: 3px 0 0; border-radius: 4px 4px 0 0; }
+.friend-angry .friend-eye { border-radius: 5px 5px 10px 10px; }
+.friend-angry .friend-cheek { background: #d7646655; box-shadow: 57px 0 #d7646655; }
+.friend-joy .friend-smile { width: 27px; height: 18px; border-width: 0; border-radius: 3px 3px 18px 18px; background: #30313a; }
+.friend-joy .friend-smile::before { content: ""; display: block; height: 5px; margin: 0 3px; border-radius: 0 0 3px 3px; background: #fffaf1; }
+.friend-joy .friend-cheek { width: 15px; height: 9px; background: #e18e6d77; box-shadow: 57px 0 #e18e6d77; }
+.is-surprised .friend-smile { opacity: 0; transform: scale(.65); }
+.is-surprised .friend-surprise-mouth { opacity: 1; transform: scale(1); }
+.is-private .friend-eye { transform: scaleY(.1); opacity: 0; }
+.is-private .friend-eyes::before, .is-private .friend-eyes::after { opacity: 1; }
+.is-private .friend-pupil { opacity: 0; }
+.is-private .friend-blue { transform: rotate(-11deg); }
+.is-private .friend-coral { transform: rotate(1deg); }
+.stage-star { position: absolute; right: 14px; top: 19px; width: 40px; height: 40px; color: #c7844b; stroke-width: 1.5; transform: rotate(15deg); }
+.hello-bubble { position: absolute; right: 9px; top: -4px; z-index: 4; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 15px 15px 15px 3px; background: #fff; box-shadow: 0 5px 16px #39405b08; font-size: 12px; font-weight: 600; transform: rotate(5deg); }
+.hello-bubble svg { width: 15px; height: 15px; color: #ac453e; fill: #f7d6ce; }
+.stage-sticker { position: absolute; left: 12px; bottom: 15px; z-index: 5; display: flex; align-items: center; gap: 7px; background: #fffdf3; padding: 9px 14px; border-radius: 7px; box-shadow: 0 3px 8px #00000008; font-family: Georgia, serif; font-style: italic; font-size: 16px; transform: rotate(-9deg); }
+.stage-sticker svg { width: 17px; color: #8e643a; }
+.stage-flower { position: absolute; right: -7px; bottom: 12px; z-index: 4; width: 46px; height: 46px; color: #ac453e; stroke-width: 1.4; transform: rotate(13deg); }
+.world-caption { min-height: 20px; margin: 8px 0 18px; text-align: center; font-size: 12px; color: #60667c; }
+.vibe-picker { padding: 0; margin: 0; border: 0; }
+.vibe-picker legend { width: 100%; text-align: center; margin-bottom: 12px; color: #52596f; font-size: 11px; }
+.vibe-picker > div { display: flex; justify-content: center; gap: 8px; }
+.vibe-picker button { height: 36px; padding: 0 13px; border: 1px solid #656e8a26; border-radius: 20px; background: transparent; color: #50566b; font-size: 11px; cursor: pointer; }
+.vibe-picker button[aria-pressed="true"] { background: #fff; border-color: #8f87aa; box-shadow: 0 3px 10px #29325c08; color: #30323d; }
+.vibe-picker button svg { width: 14px; height: 14px; }
+.world-footer { display: flex; align-items: center; gap: 11px; padding-top: 20px; border-top: 1px solid #5965821c; }
+.world-avatars { display: flex; padding-left: 0; flex-shrink: 0; }
+.world-avatars img { width: 29px; height: 29px; object-fit: cover; border: 2px solid var(--world-bg); border-radius: 50%; margin-left: -8px; }
+.world-avatars img:first-child { margin-left: 0; }
+.world-footer p { color: #545b73; font-size: 11px; }
+.world-footer > svg { width: 16px; margin-left: auto; color: #6f789a; stroke-width: 1.5; }
+.login-form-side { display: flex; flex-direction: column; justify-content: space-between; padding: 18px 34px 6px 0; min-width: 0; }
+.login-guest-link { display: flex; justify-content: flex-end; align-items: center; gap: 8px; color: #72727d; font-size: 12px; }
+.login-guest-link a { display: flex; align-items: center; gap: 5px; color: #30313a; font-weight: 600; text-decoration: none; }
+.login-guest-link svg { width: 14px; height: 14px; }
+.login-form-content { width: 100%; max-width: 386px; margin: 50px auto; }
+.login-greeting { display: grid; place-items: center; width: 47px; height: 47px; margin-bottom: 23px; border-radius: 15px; background: #f6efdf; transform: rotate(-7deg); color: #8a683b; }
+.login-greeting svg { width: 25px; height: 25px; stroke-width: 1.5; }
+.login-kicker { display: block; color: #72727d; font-size: 9px; letter-spacing: 2px; font-weight: 600; }
+.login-form-content h1 { margin: 11px 0 8px; font-size: clamp(27px, 2.6vw, 37px); line-height: 1.3; font-weight: 650; letter-spacing: -1.5px; }
+.login-form-content h1 > span { color: #ac453e; }
+.login-subtitle { color: #72727d; font-size: 13px; margin: 0 0 29px; }
+.login-demo-button { width: 100%; height: 47px; justify-content: flex-start; padding: 0 17px; background: #fff; border: 1px solid #e0e0e6; border-radius: 11px; color: #42434d; font-size: 12px; box-shadow: 0 2px 2px #00000002; cursor: pointer; }
+.login-demo-button > svg:first-child { color: #7868a0; margin-right: 4px; }
+.login-demo-button > svg:last-child { width: 14px; margin-left: auto; color: #8b8b96; }
+.login-divider { display: flex; align-items: center; gap: 13px; color: #72727d; font-size: 10px; margin: 25px 0; }
+.login-divider > span { height: 1px; flex: 1; background: #ededf0; }
+.login-form { display: grid; gap: 20px; }
+.login-field label { font-size: 12px; font-weight: 600; }
+.login-input-wrap { position: relative; margin-top: 9px; }
+.login-input-wrap > svg { position: absolute; top: 17px; left: 15px; width: 17px; height: 17px; color: #8e8e99; stroke-width: 1.5; pointer-events: none; }
+.login-input-wrap input { height: 50px; padding: 0 46px 0 43px; color: #30313a; background: #fcfcfd; border: 1px solid #e0e0e6; border-radius: 10px; font-size: 13px; box-shadow: none; }
+.login-input-wrap input::placeholder { color: #737480; }
+.login-input-wrap input:focus { border-color: #9e91bd; background: #fff; }
+.login-input-wrap input[aria-invalid="true"] { border-color: #bb453f; }
+.login-password-label { display: flex; justify-content: space-between; align-items: center; }
+.login-password-label .login-help { height: auto; padding: 0; color: #777183; font-size: 11px; font-weight: 400; cursor: pointer; }
+.login-input-wrap .login-eye-toggle { position: absolute; top: 3px; right: 4px; width: 44px; height: 44px; color: #858590; border-radius: 8px; cursor: pointer; }
+.login-input-wrap .login-eye-toggle svg { width: 17px; height: 17px; stroke-width: 1.5; }
+.login-error { margin: -5px 0 0; font-size: 12px; line-height: 1.6; color: #a02f2a; }
+.login-submit { display: flex; justify-content: space-between; width: 100%; height: 50px; margin-top: 3px; padding: 0 18px; background: #282a32; color: #fff; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; box-shadow: 0 4px 8px #282a3210; }
+.login-submit:hover { background: #42424e; }
+.login-submit svg { width: 17px; height: 17px; transition: transform .2s; }
+.login-submit:hover svg { transform: translateX(3px); }
+.login-demo-note { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 10px; color: #72727d; margin: 17px 0 0; line-height: 1.6; }
+.login-demo-note svg { flex-shrink: 0; width: 13px; height: 13px; color: #7c8582; }
+.login-small-note { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 38px; font-size: 11px; color: #73737e; }
+.login-small-note > span { width: 5px; height: 5px; border-radius: 50%; background: #8caa94; }
+.login-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #73737e; font-size: 10px; }
+.login-footer > span:last-child { display: flex; align-items: center; gap: 6px; }
+.login-footer svg { width: 13px; height: 13px; }
+.login-help-dialog { color: #24262c; background: #fff; border-color: #dedee3; border-radius: 18px; }
+.login-help-dialog [data-slot="dialog-description"] { color: #686970; line-height: 1.7; }
+.login-help-dialog > button[data-slot="button"] { background: #282a32; color: #fff; }
+@media (min-width: 1100px) and (min-height: 900px) {
+  .world-content { margin-block: 32px; }
+  .vibe-stage { margin-top: 30px; height: 270px; }
+}
+@media (max-width: 1150px) {
+  .login-layout { gap: 30px; }
+  .login-world { padding: 28px; }
+  .login-form-side { padding-right: 14px; }
+  .vibe-stage { zoom: .85; }
+  .world-footer { gap: 7px; }
+  .world-footer p { font-size: 10px; }
+}
+@media (max-width: 850px) {
+  .login-layout { padding: 12px; gap: 25px; grid-template-columns: .9fr 1fr; }
+  .login-world { padding: 25px 20px; }
+  .world-content h2 { font-size: 49px; letter-spacing: -2.7px; }
+  .world-eyebrow { font-size: 8px; letter-spacing: 1px; }
+  .vibe-stage { zoom: .67; }
+  .vibe-picker > div { flex-wrap: wrap; gap: 5px; }
+  .vibe-picker button { padding-inline: 10px; font-size: 10px; }
+  .world-footer p { max-width: 135px; }
+  .login-guest-link { font-size: 10px; gap: 5px; }
+  .login-form-content h1 { font-size: 28px; }
+}
+@media (max-width: 650px) {
+  .login-layout { display: flex; flex-direction: column; padding: 10px; gap: 0; }
+  .login-world { border-radius: 20px; padding: 18px 20px; }
+  .login-brand { font-size: 22px; }
+  .login-brand-mark, .login-brand-mark svg { width: 28px; height: 28px; }
+  .world-content { max-width: none; margin: 12px 0 0; }
+  .world-eyebrow { display: none; }
+  .world-content h2 { margin: 13px 0 8px; font-size: 35px; letter-spacing: -1.7px; position: relative; z-index: 4; width: fit-content; }
+  .world-intro, .world-footer, .stage-orbit, .stage-star, .stage-flower, .hello-bubble, .stage-sticker { display: none; }
+  .vibe-stage { position: absolute; width: 440px; right: 20px; top: 220px; margin: 0; zoom: .34; opacity: .9; }
+  .world-caption { text-align: left; font-size: 10px; margin: 8px 0 12px; max-width: 180px; min-height: 24px; }
+  .vibe-picker legend { display: none; }
+  .vibe-picker > div { justify-content: flex-start; gap: 6px; }
+  .vibe-picker button { height: 32px; padding-inline: 11px; }
+  .login-form-side { padding: 22px 14px 10px; }
+  .login-guest-link { justify-content: center; font-size: 11px; }
+  .login-form-content { max-width: 390px; margin: 28px auto 38px; }
+  .login-greeting { display: none; }
+  .login-kicker { font-size: 9px; }
+  .login-form-content h1 { font-size: 30px; }
+  .login-subtitle { margin-bottom: 23px; }
+  .login-input-wrap input { font-size: 16px; }
+  .login-divider { margin-block: 21px; }
+  .login-small-note { margin-top: 28px; }
+  .login-footer { font-size: 9px; }
+}
+@media (max-width: 360px) {
+  .login-world { padding: 18px 15px; }
+  .vibe-stage { right: 10px; top: 350px; zoom: .27; }
+  .world-content h2 { font-size: 32px; }
+  .world-caption { max-width: 142px; }
+  .login-form-side { padding-inline: 9px; }
+  .login-demo-note { align-items: flex-start; font-size: 9px; }
+  .vibe-picker button { padding-inline: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-page *, .login-page *::before, .login-page *::after { animation: none !important; transition: none !important; }
+  .login-page .friend-eye, .login-page .friend-smile, .login-page .friend-surprise-mouth { transform: none; }
+  .login-page .friend-eye, .login-page .friend-pupil, .login-page .friend-smile, .login-page .friend-surprise-mouth, .login-page .friend-eyes::before, .login-page .friend-eyes::after { transition: opacity .12s linear !important; }
+}

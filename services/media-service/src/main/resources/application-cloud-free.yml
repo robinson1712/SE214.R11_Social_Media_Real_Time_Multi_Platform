@@ -1,0 +1,30 @@
+# Keep internal endpoints private even when the optional Config Server is unavailable.
+server:
+  address: 127.0.0.1
+eureka:
+  instance:
+    hostname: 127.0.0.1
+    prefer-ip-address: false
+spring:
+  config:
+    activate:
+      on-profile: cloud-free
+  datasource:
+    url: ${CLOUD_POSTGRES_JDBC_URL}
+    username: ${CLOUD_POSTGRES_USERNAME}
+    password: ${CLOUD_POSTGRES_PASSWORD}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: sma_media
+
+minio:
+  internal-endpoint: ${CLOUD_STORAGE_S3_ENDPOINT}
+  public-endpoint: ${CLOUD_STORAGE_PUBLIC_ENDPOINT}
+  access-key: ${CLOUD_STORAGE_ACCESS_KEY}
+  secret-key: ${CLOUD_STORAGE_SECRET_KEY}
+  bucket: ${CLOUD_STORAGE_BUCKET:social-media}
+  initialize-bucket: false
+object-storage:
+  provider: s3
+  region: ${CLOUD_STORAGE_REGION}
