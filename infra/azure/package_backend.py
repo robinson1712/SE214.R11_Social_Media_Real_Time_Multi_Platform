@@ -1,4 +1,4 @@
-"""Create a private, small source release; discover runnable Maven modules."""
+"""Package CI-built Java services and private runtime settings."""
 import argparse
 import io
 import gzip
@@ -8,6 +8,7 @@ import re
 import subprocess
 import tarfile
 import xml.etree.ElementTree as ET
+import zipfile
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -129,6 +130,21 @@ def backend_digest(source, manifest):
     return digest.hexdigest()
 
 
+def add_prebuilt(archive, root, services):
+    for service in services:
+        name = service['name']
+        jar = root / service['module'] / '.runtime/build' / (name + '.jar')
+        if not jar.is_file() or not zipfile.is_zipfile(jar):
+            raise ValueError('Missing CI-built executable JAR: ' + name)
+        with zipfile.ZipFile(jar) as built:
+            if 'org/springframework/boot/loader/launch/JarLauncher.class' not in built.namelist():
+                raise ValueError('Not an executable Spring Boot JAR: ' + name)
+        info = tarfile.TarInfo('apps/' + name + '.jar')
+        info.size, info.mode = jar.stat().st_size, 0o644
+        with jar.open('rb') as data:
+            archive.addfile(info, data)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cloud-settings", required=True)
@@ -146,7 +162,7 @@ def main():
     root = Path.cwd()
     cloud = json.loads(Path(args.cloud_settings).read_text(encoding="utf-8-sig"))
     manifest = {
-        "revision": args.revision, "backend_host": args.backend_host,
+        "format": "prebuilt-jars-v1", "revision": args.revision, "backend_host": args.backend_host,
         "services": discover(root, cloud, args.pages_origin),
         "database_admin": {"url": required(cloud, "SUPABASE_JDBC_BASE"), "user": required(cloud, "SUPABASE_DB_USER"), "password": required(cloud, "SUPABASE_DB_PASSWORD")},
         "alloy_env": {key: str(value) for key, value in cloud.items() if key.startswith("GRAFANA_")},
@@ -156,6 +172,7 @@ def main():
     Path(args.output + '.digest').write_text(manifest['backend_digest'])
     with open(args.output, 'wb') as output, gzip.GzipFile(fileobj=output, mode='wb', mtime=0, filename='') as compressed:
         with tarfile.open(fileobj=compressed, mode='w') as archive:
+            add_prebuilt(archive, root, manifest['services'])
             for filename, data in (("source.tar", source), ("deployment.json", json.dumps(manifest, sort_keys=True).encode())):
                 info = tarfile.TarInfo(filename)
                 info.size, info.mode = len(data), 0o600

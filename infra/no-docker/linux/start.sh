@@ -21,3 +21,4 @@ while IFS=$'\t' read -r name port || [[ -n "${name:-}" ]]; do
   systemctl start "doan-${name}"
 done < /opt/doan/config/services.tsv
 systemctl reload-or-restart caddy
+echo 'BACKEND_READY'

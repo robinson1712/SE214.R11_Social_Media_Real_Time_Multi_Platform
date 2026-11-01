@@ -56,6 +56,8 @@ foreach ($service in ($script:ServiceDefinitions | Sort-Object Stage)) {
 Description=DoAn $($service.Name)
 After=network-online.target doan-kafka.service
 Wants=network-online.target
+StartLimitIntervalSec=900
+StartLimitBurst=3
 
 [Service]
 User=doan
@@ -63,10 +65,10 @@ Group=doan
 WorkingDirectory=/opt/doan
 EnvironmentFile=/opt/doan/env/$($service.Name).env
 ExecStart=/usr/bin/java `$JAVA_OPTS -jar /opt/doan/apps/$($service.Name).jar
-ExecStartPost=/opt/doan/bin/wait-health.sh $($service.Port) 180
+ExecStartPost=/opt/doan/bin/wait-health.sh $($service.Port) 300
 Restart=on-failure
-RestartSec=10
-TimeoutStartSec=240
+RestartSec=60
+TimeoutStartSec=360
 StandardOutput=append:/opt/doan/logs/$($service.Name).out.log
 StandardError=append:/opt/doan/logs/$($service.Name).err.log
 NoNewPrivileges=true
@@ -115,13 +117,15 @@ Write-Utf8File (Join-Path $packageRoot 'systemd/doan-start.service') @'
 Description=Start DoAn services sequentially after boot
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=900
+StartLimitBurst=3
 [Service]
 Type=oneshot
 ExecStart=/opt/doan/bin/start.sh
 RemainAfterExit=yes
 TimeoutStartSec=3600
 Restart=on-failure
-RestartSec=30
+RestartSec=60
 [Install]
 WantedBy=multi-user.target
 
