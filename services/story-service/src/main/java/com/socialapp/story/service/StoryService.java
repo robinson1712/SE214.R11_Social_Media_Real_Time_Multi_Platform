@@ -1,6 +1,7 @@
 package com.socialapp.story.service;
 
 import com.socialapp.common.event.KafkaTopics;
+import com.socialapp.common.dto.ContentAccessResponse;
 import com.socialapp.common.event.StoryCreatedEvent;
 import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
@@ -69,13 +70,40 @@ public class StoryService {
     }
 
     public List<Story> getStoriesByAuthor(String authorId) {
+        if (!canViewAuthor(authorId, CurrentUserContext.getUserId())) {
+            throw new ForbiddenException("You are not allowed to view these stories");
+        }
         return storyRepository.findByAuthorIdAndExpiresAtAfterOrderByCreatedAtDesc(authorId, Instant.now());
+    }
+
+    /** Story comments inherit current friend visibility and the story's 24-hour expiry. */
+    public ContentAccessResponse commentAccess(String id, String viewerId) {
+        return storyRepository.findById(id)
+                .map(story -> {
+                    boolean active = story.getExpiresAt() != null && story.getExpiresAt().isAfter(Instant.now());
+                    return new ContentAccessResponse(active,
+                            active && canViewAuthor(story.getAuthorId(), viewerId), story.getAuthorId());
+                })
+                .orElseGet(() -> new ContentAccessResponse(false, false, null));
     }
 
     public Story markViewed(String id) {
         Story story = getStoryOrThrow(id);
+        if (story.getExpiresAt() == null || !story.getExpiresAt().isAfter(Instant.now())) {
+            throw new ResourceNotFoundException("Story not found: " + id);
+        }
+        if (!canViewAuthor(story.getAuthorId(), CurrentUserContext.getUserId())) {
+            throw new ForbiddenException("You are not allowed to view this story");
+        }
         story.getViewerIds().add(CurrentUserContext.getUserId());
         return storyRepository.save(story);
+    }
+
+    private boolean canViewAuthor(String authorId, String viewerId) {
+        if (viewerId == null || viewerId.isBlank()) return false;
+        if (viewerId.equals(authorId)) return true;
+        List<String> friends = userServiceClient.getFriendIds(authorId);
+        return friends != null && friends.contains(viewerId);
     }
 
     public void deleteStory(String id) {

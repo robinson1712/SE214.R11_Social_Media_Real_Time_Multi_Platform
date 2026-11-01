@@ -1,0 +1,34 @@
+# Shared settings for the no-Docker cloud-free runtime. Service-specific
+# connection URLs stay in each module's application-cloud-free.yml.
+server:
+  # Every Spring process is colocated on one VM. Caddy is the only public entry point.
+  address: 127.0.0.1
+
+eureka:
+  instance:
+    hostname: 127.0.0.1
+    prefer-ip-address: false
+
+spring:
+  datasource:
+    hikari:
+      minimum-idle: 0
+      maximum-pool-size: 2
+      connection-timeout: 15000
+      validation-timeout: 5000
+      idle-timeout: 60000
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+management:
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  zipkin:
+    tracing:
+      # Grafana Alloy receives Zipkin spans locally and forwards them to Tempo.
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+
+logging:
+  level:
+    com.socialapp: INFO

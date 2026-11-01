@@ -1,0 +1,10 @@
+{
+  "base_url": "http://127.0.0.1:3003",
+  "results": [
+    {
+      "test": "persistence",
+      "status": "PASS",
+      "seconds": 5.8
+    }
+  ]
+}

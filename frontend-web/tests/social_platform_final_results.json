@@ -1,0 +1,85 @@
+{
+  "base_url": "http://127.0.0.1:3001",
+  "results": [
+    {
+      "test": "navigation",
+      "status": "PASS",
+      "seconds": 8.25
+    },
+    {
+      "test": "discussions",
+      "status": "PASS",
+      "seconds": 3.73
+    },
+    {
+      "test": "reactions_and_posts",
+      "status": "PASS",
+      "seconds": 9.86
+    },
+    {
+      "test": "post_interactions",
+      "status": "PASS",
+      "seconds": 22.16
+    },
+    {
+      "test": "locations_and_emoji",
+      "status": "PASS",
+      "seconds": 17.56
+    },
+    {
+      "test": "attachments",
+      "status": "PASS",
+      "seconds": 5.75
+    },
+    {
+      "test": "motion_and_lifecycle",
+      "status": "PASS",
+      "seconds": 6.53
+    },
+    {
+      "test": "stories",
+      "status": "PASS",
+      "seconds": 21.34
+    },
+    {
+      "test": "redirects_and_missing",
+      "status": "PASS",
+      "seconds": 4.24
+    },
+    {
+      "test": "ui_ux",
+      "status": "PASS",
+      "seconds": 16.59
+    },
+    {
+      "test": "matrix",
+      "status": "PASS",
+      "seconds": 133.94
+    },
+    {
+      "test": "persistence",
+      "status": "PASS",
+      "seconds": 4.88
+    },
+    {
+      "test": "message_drafts",
+      "status": "PASS",
+      "seconds": 2.39
+    },
+    {
+      "test": "content_controls",
+      "status": "PASS",
+      "seconds": 8.58
+    },
+    {
+      "test": "storage_safety",
+      "status": "PASS",
+      "seconds": 2.42
+    },
+    {
+      "test": "storage_failures",
+      "status": "PASS",
+      "seconds": 4.48
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+logging {
+	level  = "info"
+	format = "logfmt"
+}
+
+local.file_match "spring_logs" {
+	path_targets = [
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/eureka-server.*.log", "job" = "spring-services", "service" = "eureka-server"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/config-server.*.log", "job" = "spring-services", "service" = "config-server"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/api-gateway.*.log", "job" = "spring-services", "service" = "api-gateway"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/auth-service.*.log", "job" = "spring-services", "service" = "auth-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/user-service.*.log", "job" = "spring-services", "service" = "user-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/media-service.*.log", "job" = "spring-services", "service" = "media-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/post-service.*.log", "job" = "spring-services", "service" = "post-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/comment-service.*.log", "job" = "spring-services", "service" = "comment-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/reaction-service.*.log", "job" = "spring-services", "service" = "reaction-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/story-service.*.log", "job" = "spring-services", "service" = "story-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/reels-service.*.log", "job" = "spring-services", "service" = "reels-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/group-service.*.log", "job" = "spring-services", "service" = "group-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/fanpage-service.*.log", "job" = "spring-services", "service" = "fanpage-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/dating-service.*.log", "job" = "spring-services", "service" = "dating-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/chat-service.*.log", "job" = "spring-services", "service" = "chat-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/notification-service.*.log", "job" = "spring-services", "service" = "notification-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/feed-service.*.log", "job" = "spring-services", "service" = "feed-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/moderation-service.*.log", "job" = "spring-services", "service" = "moderation-service"},
+		{"__path__" = sys.env("SMA_LOG_DIR") + "/search-service.*.log", "job" = "spring-services", "service" = "search-service"},
+	]
+}
+
+loki.source.file "spring_logs" {
+	targets       = local.file_match.spring_logs.targets
+	forward_to    = [loki.write.grafana_cloud.receiver]
+	tail_from_end = true
+}
+
+loki.write "grafana_cloud" {
+	endpoint {
+		url = sys.env("GRAFANA_LOKI_URL")
+
+		basic_auth {
+			username = sys.env("GRAFANA_LOKI_USER")
+			password = sys.env("GRAFANA_API_TOKEN")
+		}
+	}
+}
+
+prometheus.scrape "spring_services" {
+	targets = [
+		{"__address__" = "127.0.0.1:8761", "job" = "eureka-server", "service" = "eureka-server"},
+		{"__address__" = "127.0.0.1:8888", "job" = "eureka-discovered-services", "service" = "config-server"},
+		{"__address__" = sys.env("SMA_GATEWAY_ADDRESS"), "job" = "eureka-discovered-services", "service" = "api-gateway"},
+		{"__address__" = "127.0.0.1:8081", "job" = "eureka-discovered-services", "service" = "auth-service"},
+		{"__address__" = "127.0.0.1:8082", "job" = "eureka-discovered-services", "service" = "user-service"},
+		{"__address__" = "127.0.0.1:8083", "job" = "eureka-discovered-services", "service" = "media-service"},
+		{"__address__" = "127.0.0.1:8084", "job" = "eureka-discovered-services", "service" = "post-service"},
+		{"__address__" = "127.0.0.1:8085", "job" = "eureka-discovered-services", "service" = "comment-service"},
+		{"__address__" = "127.0.0.1:8086", "job" = "eureka-discovered-services", "service" = "reaction-service"},
+		{"__address__" = "127.0.0.1:8087", "job" = "eureka-discovered-services", "service" = "story-service"},
+		{"__address__" = "127.0.0.1:8088", "job" = "eureka-discovered-services", "service" = "reels-service"},
+		{"__address__" = "127.0.0.1:8089", "job" = "eureka-discovered-services", "service" = "group-service"},
+		{"__address__" = "127.0.0.1:8090", "job" = "eureka-discovered-services", "service" = "fanpage-service"},
+		{"__address__" = "127.0.0.1:8091", "job" = "eureka-discovered-services", "service" = "dating-service"},
+		{"__address__" = "127.0.0.1:8092", "job" = "eureka-discovered-services", "service" = "chat-service"},
+		{"__address__" = "127.0.0.1:8093", "job" = "eureka-discovered-services", "service" = "notification-service"},
+		{"__address__" = "127.0.0.1:8094", "job" = "eureka-discovered-services", "service" = "feed-service"},
+		{"__address__" = "127.0.0.1:8095", "job" = "eureka-discovered-services", "service" = "moderation-service"},
+		{"__address__" = "127.0.0.1:8096", "job" = "eureka-discovered-services", "service" = "search-service"},
+	]
+	metrics_path    = "/actuator/prometheus"
+	scrape_interval = "15s"
+	forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.remote_write "grafana_cloud" {
+	endpoint {
+		url = sys.env("GRAFANA_PROMETHEUS_URL")
+
+		basic_auth {
+			username = sys.env("GRAFANA_PROMETHEUS_USER")
+			password = sys.env("GRAFANA_API_TOKEN")
+		}
+	}
+}
+
+otelcol.auth.basic "grafana_cloud" {
+	username = sys.env("GRAFANA_OTLP_USER")
+	password = sys.env("GRAFANA_API_TOKEN")
+}
+
+otelcol.receiver.zipkin "spring" {
+	endpoint = "127.0.0.1:9411"
+
+	output {
+		traces = [otelcol.exporter.otlphttp.grafana_cloud.input]
+	}
+}
+
+otelcol.exporter.otlphttp "grafana_cloud" {
+	client {
+		endpoint = sys.env("GRAFANA_OTLP_URL")
+		auth     = otelcol.auth.basic.grafana_cloud.handler
+	}
+}

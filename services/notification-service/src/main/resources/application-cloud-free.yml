@@ -1,0 +1,15 @@
+# Keep internal endpoints private even when the optional Config Server is unavailable.
+server:
+  address: 127.0.0.1
+eureka:
+  instance:
+    hostname: 127.0.0.1
+    prefer-ip-address: false
+spring:
+  config:
+    activate:
+      on-profile: cloud-free
+  data:
+    mongodb:
+      uri: ${CLOUD_MONGODB_URI}
+      auto-index-creation: true

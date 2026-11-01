@@ -67,6 +67,18 @@ public class JwtTokenProvider {
         }
     }
 
+    /** Returns true only for a valid, unexpired access token. Refresh tokens must never authorize API calls. */
+    public boolean validateAccessToken(String token) {
+        try {
+            Claims claims = Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
+            return "access".equals(claims.get("type", String.class))
+                    && claims.getSubject() != null
+                    && !claims.getSubject().isBlank();
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     public Claims parseClaims(String token) {
         return Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
     }

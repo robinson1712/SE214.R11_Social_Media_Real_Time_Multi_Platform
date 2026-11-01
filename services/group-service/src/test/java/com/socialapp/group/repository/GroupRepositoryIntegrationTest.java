@@ -6,16 +6,12 @@ import com.socialapp.group.entity.GroupPrivacy;
 import com.socialapp.group.entity.MemberRole;
 import com.socialapp.group.entity.MemberStatus;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
 
@@ -23,28 +19,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration test running the real {@code findVisibleGroups} JPQL query
- * against an actual Postgres instance (via Testcontainers) — this is the exact
+ * against an actual native PostgreSQL instance — this is the exact
  * query that broke in production with "function lower(bytea) does not exist"
  * when called with a null name parameter (see TODO.md, "Lỗi thứ 7"). A
  * mocked-repository unit test (see GroupServiceTest) can never catch this
  * class of bug because the query text never actually executes there; only a
  * real database can validate that the JPQL is both syntactically valid and
- * semantically correct.
+ * semantically correct. Set RUN_NATIVE_POSTGRES_TESTS=true plus DB_HOST,
+ * DB_PORT, DB_USER and DB_PASSWORD to run it; no-Docker CI starts PostgreSQL
+ * as a native service.
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Testcontainers
+@EnabledIfEnvironmentVariable(named = "RUN_NATIVE_POSTGRES_TESTS", matches = "true")
 class GroupRepositoryIntegrationTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @DynamicPropertySource
-    static void datasourceProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-    }
 
     @Autowired
     private GroupRepository groupRepository;

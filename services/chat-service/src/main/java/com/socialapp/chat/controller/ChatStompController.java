@@ -9,6 +9,7 @@ import com.socialapp.chat.repository.MessageRepository;
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.MessageEvent;
 import com.socialapp.common.exception.ForbiddenException;
+import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,23 @@ public class ChatStompController {
     @MessageMapping("/chat.send")
     public void sendMessage(ChatSendRequest request, Principal principal) {
         String senderId = principal.getName();
+
+        if (request == null || request.conversationId() == null || request.conversationId().isBlank()
+                || request.conversationId().length() > 128) {
+            throw new BadRequestException("conversationId is required and must be at most 128 characters");
+        }
+        boolean hasContent = request.content() != null && !request.content().isBlank();
+        boolean hasMedia = request.mediaUrl() != null && !request.mediaUrl().isBlank();
+        if (!hasContent && !hasMedia) {
+            throw new BadRequestException("A message requires text or an attachment");
+        }
+        if (request.content() != null && request.content().length() > 20_000) {
+            throw new BadRequestException("Message text exceeds the 20000 character limit");
+        }
+        if (lengthExceeds(request.mediaUrl(), 2048) || lengthExceeds(request.storyReplyId(), 128)
+                || lengthExceeds(request.storyReplyPreviewUrl(), 2048)) {
+            throw new BadRequestException("Message attachment metadata exceeds the configured limit");
+        }
 
         Conversation conversation = conversationRepository.findById(request.conversationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found: " + request.conversationId()));
@@ -75,6 +93,10 @@ public class ChatStompController {
         for (String participantId : conversation.getParticipantIds()) {
             messagingTemplate.convertAndSendToUser(participantId, "/queue/messages", saved);
         }
+    }
+
+    private boolean lengthExceeds(String value, int limit) {
+        return value != null && value.length() > limit;
     }
 
     private String truncate(String content) {

@@ -1,13 +1,19 @@
 # Social Media Backend (Facebook-like) — Java Spring Boot Microservices
 
+> **Frontend:** Next.js/React nằm trong [`frontend-web`](frontend-web/README.md), production chạy trên Cloudflare Workers.
+> **Backend:** Java Spring Boot microservices, đóng gói thành JAR và chạy native trên VM.
+> GitHub Actions phục vụ CI/CD; YAML của Spring Boot là cấu hình runtime backend.
+> Hướng dẫn chạy local: [NO_DOCKER_SETUP.md](NO_DOCKER_SETUP.md). Trạng thái cloud/nghiệm thu: [PLAN.md](PLAN.md) và [ACCEPTANCE_MATRIX.md](infra/no-docker/ACCEPTANCE_MATRIX.md).
+
+Backend Java/Kafka chạy native trên máy backend; Next.js gọi HTTPS/WSS gateway origin được cấu hình lúc build. URL Worker production sẽ xuất hiện trong job deploy của GitHub Actions.
+
 Backend microservice cho một mạng xã hội kiểu Facebook: post, avatar, story, reels, comment,
-reaction, block, group, fanpage, dating, nhắn tin real-time. Kiến trúc hướng đối tượng, phục vụ
-chung cho cả web và mobile qua REST API + WebSocket.
+reaction, block, group, fanpage, dating và nhắn tin real-time. Web client gọi REST API + WebSocket.
 
 ## Kiến trúc
 
 ```
-Client (Web/Mobile)
+Next.js Web client
         │
         ▼
   API Gateway (8080)  ── xác thực JWT, forward X-User-Id/X-User-Roles xuống downstream
@@ -32,16 +38,16 @@ Client (Web/Mobile)
         ├── moderation-service (8095)    Postgres: moderation_db — user report + admin review queue
         └── search-service (8096)        Không có DB riêng — tổng hợp qua Feign (user/group/fanpage/post)
 
-  frontend (3001) — Flutter Web (nginx serve), bố cục dọc kiểu Facebook, gọi thẳng API Gateway
+  frontend-web (3000) — Next.js, gọi API Gateway qua HTTPS/WebSocket proxy
 
   Config Server (8888) — cấp config tập trung (native, đọc từ ./config-repo)
   Kafka — giao tiếp bất đồng bộ giữa các service (post/comment/reaction/group/page/match/message events)
 
-  Observability: Zipkin (9411, distributed tracing) — Loki+Promtail+Grafana (3000, log tập trung)
-                — Prometheus (9090, metrics, tự phát hiện service qua Eureka) + dashboard Grafana có sẵn
+  Observability: Grafana Alloy (tùy chọn) gửi metrics/logs/traces tới Grafana Cloud
 ```
 
-Chi tiết đầy đủ: xem `docs/plan.md` hoặc lịch sử trò chuyện đã tạo ra hệ thống này.
+Kiến trúc cloud mục tiêu và điều kiện nghiệm thu: xem [PLAN.md](PLAN.md) và
+[ACCEPTANCE_MATRIX.md](infra/no-docker/ACCEPTANCE_MATRIX.md).
 
 ## Công nghệ
 
@@ -51,30 +57,25 @@ Chi tiết đầy đủ: xem `docs/plan.md` hoặc lịch sử trò chuyện đ�
 - Spring Kafka, Spring Cloud OpenFeign, Spring WebSocket (STOMP)
 - JWT (jjwt) tự issue ở `auth-service`, xác thực tập trung ở `api-gateway`
 - MinIO (S3-compatible) cho lưu trữ media
-- Docker Compose cho toàn bộ hạ tầng + service
+- Next.js, React, TypeScript cho giao diện web
 
-## Chạy toàn bộ hệ thống
+## Chạy local
 
-### 1. Build tất cả module (bắt buộc trước khi build Docker image, vì Dockerfile chỉ copy jar đã build sẵn)
+Yêu cầu: Java 17+, Maven, Node.js 24+. Cài dependency UI một lần, sau đó build backend và khởi động runtime:
 
-```bash
-mvn -q -B clean package -DskipTests
+```powershell
+Push-Location frontend-web
+npm ci
+Pop-Location
+.\infra\no-docker\scripts\Build.ps1
+.\infra\no-docker\scripts\Doctor.ps1
+.\infra\no-docker\scripts\Start.ps1
 ```
 
-### 2. Chạy bằng Docker Compose
+`Start.ps1` khởi động backend và Next.js. Mở `http://localhost:3000`; dừng bằng `infra/no-docker/scripts/Stop.ps1`.
+Windows runtime bundle chỉ chứa backend; frontend production được deploy riêng lên Cloudflare Workers.
 
-```bash
-docker compose up -d --build
-```
-
-Chờ khoảng 1-2 phút để Postgres/Mongo/Kafka/MinIO/Eureka khởi động xong trước khi các service
-đăng ký thành công vào Eureka. Kiểm tra: http://localhost:8761 (Eureka dashboard).
-
-Lệnh trên cũng build và chạy `frontend` (Flutter Web) cùng lúc — mở http://localhost:3001 sau khi
-backend đã sẵn sàng (`api-gateway` cần đăng ký xong ở Eureka trước, nếu không các request đầu tiên từ
-giao diện sẽ gặp `503 Service Unavailable`).
-
-### 3. Test nhanh luồng end-to-end
+### Test nhanh API
 
 ```bash
 # Đăng ký + đăng nhập
@@ -103,17 +104,13 @@ WebSocket (STOMP): chat tại `ws://localhost:8080/ws?token=$TOKEN` (SockJS) ho�
 
 Swagger UI: **1 điểm truy cập chung** qua gateway tại `http://localhost:8080/swagger-ui.html` — dropdown góc trên bên phải để chuyển qua lại giữa 15 business service (không cần nhớ port riêng từng service nữa). Mỗi service vẫn expose Swagger UI riêng trên port của nó nếu cần test trực tiếp không qua gateway, vd `http://localhost:8084/swagger-ui/index.html` (post-service).
 
-Observability: Zipkin UI `http://localhost:9411` (tìm trace theo service/traceId — mọi request qua gateway đều có 100% được trace, kể cả chặng Kafka bất đồng bộ); Grafana `http://localhost:3000` (anonymous admin, không cần đăng nhập) → Explore → datasource Loki để xem log tập trung mọi container, filter theo `{service="auth-service"}` — mỗi dòng log đều có sẵn `[traceId-spanId]` để tra ngược đúng trace trong Zipkin; dashboard **Service Overview** (đã provision sẵn, mở ngay không cần tự tạo) hiển thị request rate/p99 latency/error rate/JVM heap/CPU theo từng service — nguồn Prometheus `http://localhost:9090`, tự phát hiện service cần scrape qua Eureka thay vì liệt kê tay.
+Observability: Grafana Alloy gửi telemetry tới Grafana Cloud khi bật cấu hình; log ứng dụng local nằm trong `.runtime/logs`. Giao diện web local dùng cổng 3000.
 
-Tracing sampling mặc định 100% (`TRACING_SAMPLING_PROBABILITY`, mặc định `1.0` nếu không set) — hợp lý
-cho demo/dev vì mọi request đều thấy được trace ngay. Deploy production nên hạ xuống (vd `0.1` = 10%)
-để giảm overhead + dung lượng lưu trữ Zipkin: set biến môi trường này trong `x-app-env` của
-`docker-compose.yml` (hoặc theo từng service riêng nếu muốn khác nhau), không cần rebuild image.
+Tracing sampling mặc định 100% (`TRACING_SAMPLING_PROBABILITY`, mặc định `1.0`). Production nên đặt mức thấp hơn nếu cần giảm overhead và dung lượng lưu trữ Zipkin.
 
-### Chạy từng service riêng lẻ khi phát triển (không qua Docker)
+### Chạy từng service riêng lẻ khi phát triển
 
-Cần Postgres/MongoDB/Redis/Kafka/MinIO chạy sẵn (có thể `docker compose up postgres mongodb redis kafka minio -d`
-rồi chạy service bằng `mvn spring-boot:run` trong từng thư mục `services/<name>`), theo thứ tự:
+Cần các datastore và Kafka đã sẵn sàng; chạy service bằng `mvn spring-boot:run` trong từng thư mục `services/<name>`, theo thứ tự:
 `eureka-server` → `config-server` → các business service → `api-gateway`.
 
 ## Đã hoàn thiện thêm sau lượt scaffold đầu
@@ -133,34 +130,40 @@ rồi chạy service bằng `mvn spring-boot:run` trong từng thư mục `servi
   `feed-service`): mỗi `@FeignClient` có `fallbackFactory` riêng, phân biệt lỗi nghiệp vụ (404 —
   vẫn báo lỗi đúng) với lỗi hạ tầng (service sập/timeout — trả `ServiceUnavailableException` 503
   hoặc giá trị rỗng tuỳ ngữ cảnh). Xem trạng thái circuit qua `actuator/circuitbreakers`.
-- **Observability**: distributed tracing (Zipkin) + centralized logging (Loki/Promtail/Grafana) —
+- **Observability**: distributed tracing và log qua Grafana Alloy/Grafana Cloud khi cấu hình —
   xem mục Observability ở trên.
-- **CI/CD**: GitHub Actions (`.github/workflows/ci-cd.yml`) build+test toàn reactor, chạy
-  Testcontainers integration test, build Docker image cho mọi service, push GHCR khi merge `main`.
+- **CI/CD hiện tại**: workflow cài PostgreSQL native trên hosted runner, chạy kiểm tra frontend/backend, phát hành backend và deploy Next.js Worker. Workflow Windows tạo bundle backend-only.
+  Xem [.github/workflows](.github/workflows) để biết từng job.
+- **Kiểm tra backend**: workflow bật
+  `GroupRepositoryIntegrationTest` bằng `RUN_NATIVE_POSTGRES_TESTS=true`, chạy Maven, rồi build
+  và upload bundle Windows sau khi CI đạt. Xem [PLAN.md](PLAN.md) để biết các gate còn mở.
 - **Content moderation** (`moderation-service`, port 8095): profanity filter tự động (tiếng Anh +
   tiếng Việt, giữ nguyên dấu thanh) chặn `post-service`/`comment-service`/`reels-service`/
   `story-service`/`group-service`/`fanpage-service` lúc tạo nội dung — đủ cả 6 loại nội dung trong hệ
   thống; user report nội dung vi phạm qua `POST /api/moderation/reports`; admin (role `ADMIN`) duyệt
   hàng đợi qua `GET /api/moderation/reports`, xử lý `PUT /api/moderation/reports/{id}/resolve` với
   `REMOVE_CONTENT` sẽ publish sự kiện Kafka xoá nội dung xuyên service (`group-service`/
-  `fanpage-service` xoá cascade cả bảng thành viên/follower/admin liên quan). Set biến môi trường
-  `ADMIN_EMAILS=admin@social.app,...` (comma-separated) trước khi build `auth-service` để các email
-  đó tự động có role `ADMIN` lúc đăng ký.
+  `fanpage-service` xoá cascade cả bảng thành viên/follower/admin liên quan). Đăng ký công khai luôn
+  tạo role `USER`; email không còn tự cấp role `ADMIN`. Admin đầu tiên có thể được tạo qua
+  `POST http://127.0.0.1:8081/internal/auth/bootstrap-admin` bằng header
+  `X-Admin-Bootstrap-Token`, chỉ từ máy auth-service hoặc SSH tunnel tới loopback. Đặt
+  `ADMIN_BOOTSTRAP_TOKEN` thành bí mật ngẫu nhiên tối thiểu 32 byte cho lần bootstrap, rồi gỡ bí mật
+  khỏi môi trường; endpoint từ chối nếu đã có ADMIN. Không gọi qua API Gateway. Đây mới là triển khai
+  source, chưa được xác nhận runtime; xem [PLAN.md](PLAN.md) và [acceptance matrix](infra/no-docker/ACCEPTANCE_MATRIX.md).
 - **Share/repost, tag người dùng, custom audience privacy** (`post-service`): `POST /api/posts/{id}/share`
   chia sẻ lại 1 bài (kèm lời bình, tăng `shareCount` bài gốc); tạo/sửa bài có thể kèm `taggedUserIds`
   (thông báo `type: TAG` cho người được tag); `privacy: CUSTOM` + `customAudienceUserIds` giới hạn
-  người xem theo danh sách cụ thể. **Post-service giờ mới thực sự enforce privacy lúc đọc**
-  (`getPostsByAuthor`/`ByGroup`/`ByPage`) — `FRIENDS` gọi Feign sang `user-service` kiểm tra bạn bè.
+  người xem theo danh sách cụ thể. Một số đường list (`getPostsByAuthor`/`ByGroup`/`ByPage`)
+  kiểm tra privacy; GET theo ID, batch và feed còn rủi ro cần sửa/test theo [PLAN.md](PLAN.md).
 - **Tìm kiếm tổng hợp** (`search-service`, port 8096): `GET /api/search?q=&limit=` gộp kết quả từ
   user/group/fanpage/post-service qua Feign (mỗi client có circuit breaker + fallback rỗng riêng —
   1 service down không sập cả search). Không có database riêng.
-- **Frontend Flutter Web** (`frontend/`, port 3001): giao diện bố cục dọc kiểu Facebook, gắn thẳng vào
+- **Frontend Next.js** (`frontend-web/`): giao diện web hiện tại, gắn vào
   các API thật ở trên — đăng nhập, feed, đăng bài (kèm share/tag/custom-audience privacy), comment/
   reply, reaction, profile + kết bạn, tìm kiếm tổng hợp (kèm trang kết quả riêng), Group, Fanpage,
   Story, Reels, Dating, Chat real-time (STOMP/WebSocket), Notification real-time (STOMP/WebSocket),
-  trang quản trị Moderation (gate theo role `ADMIN`). Đã phủ đủ chức năng của toàn bộ 16 business
-  service. Chi tiết đầy đủ + giới hạn đã biết (chưa test bằng trình duyệt thật, chưa test round-trip
-  WebSocket thật): xem mục "Giai đoạn 2a"/"Giai đoạn 2b" trong `TODO.md`.
+  trang quản trị Moderation (gate theo role `ADMIN`). Các case cloud/nghiệp vụ còn lại nằm trong
+  [ACCEPTANCE_MATRIX.md](infra/no-docker/ACCEPTANCE_MATRIX.md).
 
 ## Giới hạn còn lại
 

@@ -1,0 +1,13 @@
+:3001 {
+  @gateway path /api/* /ws /ws/* /ws-notifications /ws-notifications/* /swagger-ui.html /swagger-ui/* /webjars/* /v3/api-docs/* /docs/*
+  handle @gateway {
+    reverse_proxy {$GATEWAY_UPSTREAM:127.0.0.1:8080} {
+      header_up X-Forwarded-For {http.request.remote.host}
+      header_up X-Real-IP {http.request.remote.host}
+      header_up -Forwarded
+    }
+  }
+  handle {
+    reverse_proxy {$NEXTJS_UPSTREAM:127.0.0.1:3000}
+  }
+}

@@ -19,7 +19,7 @@ public class PostClientFallbackFactory implements FallbackFactory<PostClient> {
 
     @Override
     public PostClient create(Throwable cause) {
-        return ids -> {
+        return (ids, viewerId) -> {
             log.warn("post-service unavailable while hydrating posts [{}]: {}", ids, cause.getMessage());
             return ApiResponse.success(List.of());
         };

@@ -1,0 +1,11 @@
+{
+  "base_url": "http://127.0.0.1:3001",
+  "results": [
+    {
+      "test": "matrix",
+      "status": "FAIL",
+      "error": "light 320x640 /: {'overflow': False, 'heading': 'Feeds', 'title': 'Feeds \u00b7 VibeSocial', 'theme': 'light', 'activeNav': 1, 'dockVisible': True, 'dock': {'x': 144.5, 'y': 566, 'width': 60, 'height': 60, 'top': 566, 'right': 204.5, 'bottom': 626, 'left': 144.5}, 'feed': {'x': 0, 'y': 71, 'width': 320, 'height': 965.75, 'top': 71, 'right': 320, 'bottom': 1036.75, 'left': 0}, 'nav': {'x': 0, 'y': 638, 'width': 349, 'height': 60, 'top': 638, 'right': 349, 'bottom': 698, 'left': 0}, 'dockPosition': 'fixed', 'brokenImages': [], 'rails': [{'scrollTop': 0, 'clientHeight': 70, 'scrollHeight': 70, 'bottom': 71, 'children': [54, 698, 60]}]}\ndark 320x640 /: {'overflow': False, 'heading': 'Feeds', 'title': 'Feeds \u00b7 VibeSocial', 'theme': 'dark', 'activeNav': 1, 'dockVisible': True, 'dock': {'x': 144.5, 'y': 566, 'width': 60, 'height': 60, 'top': 566, 'right': 204.5, 'bottom': 626, 'left': 144.5}, 'feed': {'x': 0, 'y': 71, 'width': 320, 'height': 965.75, 'top': 71, 'right': 320, 'bottom': 1036.75, 'left': 0}, 'nav': {'x': 0, 'y': 638, 'width': 349, 'height': 60, 'top': 638, 'right': 349, 'bottom': 698, 'left': 0}, 'dockPosition': 'fixed', 'brokenImages': [], 'rails': [{'scrollTop': 0, 'clientHeight': 70, 'scrollHeight': 70, 'bottom': 71, 'children': [54, 698, 60]}]}",
+      "seconds": 132.67
+    }
+  ]
+}

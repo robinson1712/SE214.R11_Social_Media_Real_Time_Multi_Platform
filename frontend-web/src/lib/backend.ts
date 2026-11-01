@@ -1,0 +1,10 @@
+export type PageDto<T> = { content: T[]; page?: number; size?: number; totalElements?: number; totalPages?: number; last?: boolean };
+export type ProfileDto = { id: string; fullName?: string; avatarUrl?: string; coverUrl?: string; bio?: string; location?: string; readReceiptsEnabled?: boolean };
+export type PostDto = { id: string; authorId: string; content?: string; mediaUrls?: string[]; privacy?: string; groupId?: string; pageId?: string; sharedPostId?: string; createdAt?: string; reactionCount?: number; commentCount?: number; shareCount?: number; pinned?: boolean };
+export type CommentDto = { id: string; authorId: string; content: string; parentCommentId?: string; createdAt: string };
+export type MessageDto = { id: string; conversationId: string; senderId: string; content?: string; mediaUrl?: string; sentAt: string; storyReplyId?: string; storyReplyPreviewUrl?: string; readBy?: string[]; deleted?: boolean };
+export type ConversationDto = { id: string; type: string; participantIds: string[]; name?: string; lastMessagePreview?: string; lastMessageAt?: string; unreadCount?: number };
+export type NotificationDto = { id: string; recipientId: string; actorId?: string; type: string; targetId?: string; targetType?: string; message?: string; read?: boolean; createdAt: string };
+export type GroupDto = { id: string; name: string; description?: string; coverUrl?: string; privacy?: string; ownerId: string; memberCount?: number };
+export type StoryDto = { id: string; authorId: string; mediaUrl: string; mediaType?: string; createdAt: string; expiresAt?: string; viewerIds?: string[] };
+export type FriendshipDto = { id: string; requesterId: string; addresseeId: string; status: string };

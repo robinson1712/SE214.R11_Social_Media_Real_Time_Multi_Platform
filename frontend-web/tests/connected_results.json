@@ -1,0 +1,22 @@
+{
+  "base_url": "http://127.0.0.1:3300",
+  "fixture_url": "http://127.0.0.1:3399",
+  "live_java": false,
+  "results": [
+    {
+      "test": "test_connected_posts",
+      "status": "PASS",
+      "seconds": 8.64
+    },
+    {
+      "test": "test_connected_screens",
+      "status": "PASS",
+      "seconds": 6.73
+    },
+    {
+      "test": "test_connected_chat",
+      "status": "PASS",
+      "seconds": 10.2
+    }
+  ]
+}

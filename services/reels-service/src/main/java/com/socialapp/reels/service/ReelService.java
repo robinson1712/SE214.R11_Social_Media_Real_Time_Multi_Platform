@@ -1,6 +1,7 @@
 package com.socialapp.reels.service;
 
 import com.socialapp.common.event.KafkaTopics;
+import com.socialapp.common.dto.ContentAccessResponse;
 import com.socialapp.common.event.ReelCreatedEvent;
 import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
@@ -69,6 +70,13 @@ public class ReelService {
 
     public Reel getReel(String id) {
         return getReelOrThrow(id);
+    }
+
+    /** Reels are public in the current business contract. */
+    public ContentAccessResponse commentAccess(String id) {
+        return reelRepository.findById(id)
+                .map(reel -> new ContentAccessResponse(true, true, reel.getAuthorId()))
+                .orElseGet(() -> new ContentAccessResponse(false, false, null));
     }
 
     public Reel viewReel(String id) {

@@ -1,0 +1,19 @@
+# Keep internal endpoints private even when the optional Config Server is unavailable.
+server:
+  address: 127.0.0.1
+eureka:
+  instance:
+    hostname: 127.0.0.1
+    prefer-ip-address: false
+spring:
+  config:
+    activate:
+      on-profile: cloud-free
+  datasource:
+    url: ${CLOUD_POSTGRES_JDBC_URL}
+    username: ${CLOUD_POSTGRES_USERNAME}
+    password: ${CLOUD_POSTGRES_PASSWORD}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: sma_group
