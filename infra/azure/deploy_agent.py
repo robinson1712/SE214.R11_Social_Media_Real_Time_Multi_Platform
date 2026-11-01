@@ -80,16 +80,18 @@ def unit(service, release):
 Description=DoAn {name}
 After=network-online.target doan-kafka.service
 Wants=network-online.target
+StartLimitIntervalSec=900
+StartLimitBurst=3
 [Service]
 User=doan
 Group=doan
 WorkingDirectory=/opt/doan
 EnvironmentFile={release}/env/{name}.env
 ExecStart=/usr/bin/java $JAVA_OPTS -jar {release}/apps/{name}.jar
-ExecStartPost=/opt/doan/deploy-agent/wait-health.sh {port} 180
+ExecStartPost=/opt/doan/deploy-agent/wait-health.sh {port} 300
 Restart=on-failure
-RestartSec=10
-TimeoutStartSec=240
+RestartSec=60
+TimeoutStartSec=360
 StandardOutput=append:/opt/doan/logs/{name}.out.log
 StandardError=append:/opt/doan/logs/{name}.err.log
 NoNewPrivileges=true
@@ -129,20 +131,18 @@ def validate_manifest(manifest):
 
 
 def prepare(release, manifest, log):
+    if manifest.get('format') != 'prebuilt-jars-v1':
+        raise ValueError('CI-built prebuilt JAR release required; upgrade the publisher')
     source = release / 'source'
     extract(release / 'source.tar', source)
     validate_manifest(manifest)
     command(['chown', '-R', 'doan:doan', str(source)])
-    env = dict(os.environ, MAVEN_OPTS='-Xmx768m')
-    command(['runuser', '-u', 'doan', '--', 'mvn', '-B', '-Dmaven.repo.local=/var/cache/doan-maven', '-f', str(source / 'pom.xml'), '-Pnative-runtime', 'clean', 'package', '-DskipTests'], log, env)
     ports = {s['name']: s['port'] for s in manifest['services']}
     for service in manifest['services']:
         name = service['name']
-        jar = source / service['module'] / '.runtime/build' / (name + '.jar')
+        jar = release / 'apps' / (name + '.jar')
         if not jar.is_file():
             raise RuntimeError('Missing executable JAR: ' + name)
-        (release / 'apps').mkdir(exist_ok=True)
-        shutil.copy2(jar, release / 'apps' / jar.name)
         values = dict(service['env'])
         values['EUREKA_URI'] = f"http://127.0.0.1:{ports['eureka-server']}/eureka/"
         values['CONFIG_SERVER_URI'] = f"http://127.0.0.1:{ports['config-server']}"
@@ -158,7 +158,7 @@ def prepare(release, manifest, log):
     pg_env = dict(os.environ, PGUSER=admin['user'], PGPASSWORD=admin['password'], PGCONNECT_TIMEOUT='15')
     url = admin['url'].removeprefix('jdbc:')
     schemas = sorted({s['schema'] for s in manifest['services'] if s.get('schema')})
-    history = Path('/var/lib/doan-deploy/migrations')
+    history = STATE.parent / 'migrations'
     history.mkdir(parents=True, exist_ok=True)
     initializer = source / 'infra/no-docker/config/supabase/init-schemas.sql'
     initializer_hash = hashlib.sha256(initializer.read_bytes()).hexdigest()

@@ -1,0 +1,2 @@
+# Linux boot and deployment scripts must remain executable when downloaded raw.
+*.sh text eol=lf
