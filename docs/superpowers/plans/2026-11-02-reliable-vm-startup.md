@@ -13,7 +13,7 @@
 ## Constraints
 
 - Keep `ui-ha-tang`, current VM, databases, credentials and public URLs. No new paid infrastructure or dependencies.
-- No commit, push, deployment or VM power action during local preparation.
+- No VM power action during preparation. Commits use the user's selected `ui-ha-tang` / `UI + Hạ tầng` names; PR stays separate from production merge.
 - Preserve original workspace edits. Work in the existing managed worktree.
 - Existing installed updater does not upgrade itself; document and provide a one-time installer before publishing binary releases.
 - Startup still takes time and external database availability remains necessary; do not claim production recovery from local tests.
@@ -33,5 +33,14 @@
 - [x] Build Java 17 native-runtime JARs in the release job; package and validate every discovered executable artifact.
 - [x] Consume prebuilt artifacts on VM, preserve env/schema/rollback behavior, bound restarts and increase startup health budget.
 - [x] Prepare boot-first installer and policy for existing services; provide one-time application and verification instructions.
-- [x] Run Azure suite (18 passed), real native-runtime Maven package (19 services, application classfile version 61), stream-package all 19 real JARs, Bash syntax/behavior checks and PowerShell parsing.
+- [x] Run Azure suite (23 passed after Redis/core-first follow-up), real native-runtime Maven package (19 services, application classfile version 61), stream-package all 19 real JARs, Bash syntax/behavior checks and PowerShell parsing.
 - [x] Independent review completed; fixed legacy boot concurrency guard and covered the refusal in fixture. Production application/cold boot remains pending.
+
+## Follow-up approved by owner (2026-11-02, Asia/Bangkok)
+
+- Owner approved SSH restricted to current workstation IP; updated existing ssh-admin rule instead of adding public access. Direct logs identified unavailable Aiven Redis DNS as a separate cause of Chat health failure.
+- Owner selected native Redis on the same VM and accepted that existing remote Redis data was not migrated. PostgreSQL/MongoDB remain unchanged.
+- Added configure/install scripts: loopback, private generated password, AOF, noeviction, 512 MB cap; persistent per-service environment override, including new release units.
+- Core-first boot must start Eureka/Config/Auth/User/Gateway before optional services, continue other optional services after an optional failure, and report degradation honestly.
+- Installer must restore updater timer even after degraded boot; Redis installer must also reject concurrent legacy startup. Both reviewer findings have regression checks.
+- Runtime recovery verified Redis AUTH/no-anonymous access/AOF and Auth/User/Gateway/Chat health UP; Worker POST empty login reaches application validation (400). Full installed boot policy and cold boot remain to verify.

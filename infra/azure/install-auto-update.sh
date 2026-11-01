@@ -93,10 +93,16 @@ EOF
   units+=("doan-${name}.service")
 done < /opt/doan/config/services.tsv
 systemctl daemon-reload
-systemctl reset-failed doan-start.service "${units[@]}"
+# Inactive units can be garbage-collected by systemd; their reset is not a startup failure.
+systemctl reset-failed doan-start.service "${units[@]}" 2>/dev/null || true
 systemctl enable doan-start.service doan-auto-update.timer
 flock -u 9
 exec 9>&-
-systemctl restart doan-start.service
+boot_result=0
+systemctl restart doan-start.service || boot_result=$?
 systemctl start doan-auto-update.timer
+if (( boot_result != 0 )); then
+  echo 'Boot reported a failure/degraded service; updater timer restored. Inspect doan-start journal.' >&2
+  exit "$boot_result"
+fi
 echo 'Boot-first startup installed. CI-built releases are checked after native boot completes.'

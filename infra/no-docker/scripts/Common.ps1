@@ -14,8 +14,8 @@ $script:EnvFile = Join-Path $script:RuntimeRoot 'env.ps1'
 $script:ServiceDefinitions = @(
     [pscustomobject]@{ Name = 'eureka-server';       Port = 8761; Module = 'infra\eureka-server';             Stage = 10; Store = '' },
     [pscustomobject]@{ Name = 'config-server';       Port = 8888; Module = 'infra\config-server';             Stage = 20; Store = '' },
-    [pscustomobject]@{ Name = 'auth-service';        Port = 8081; Module = 'services\auth-service';           Stage = 30; Store = 'postgres'; Schema = 'sma_auth';       EnvPrefix = 'AUTH' },
-    [pscustomobject]@{ Name = 'user-service';        Port = 8082; Module = 'services\user-service';           Stage = 30; Store = 'postgres'; Schema = 'sma_user';       EnvPrefix = 'USER' },
+    [pscustomobject]@{ Name = 'auth-service';        Port = 8081; Module = 'services\auth-service';           Stage = 22; Store = 'postgres'; Schema = 'sma_auth';       EnvPrefix = 'AUTH' },
+    [pscustomobject]@{ Name = 'user-service';        Port = 8082; Module = 'services\user-service';           Stage = 23; Store = 'postgres'; Schema = 'sma_user';       EnvPrefix = 'USER' },
     [pscustomobject]@{ Name = 'media-service';       Port = 8083; Module = 'services\media-service';          Stage = 30; Store = 'postgres'; Schema = 'sma_media';      EnvPrefix = 'MEDIA' },
     [pscustomobject]@{ Name = 'post-service';        Port = 8084; Module = 'services\post-service';           Stage = 30; Store = 'postgres'; Schema = 'sma_post';       EnvPrefix = 'POST' },
     [pscustomobject]@{ Name = 'comment-service';     Port = 8085; Module = 'services\comment-service';        Stage = 30; Store = 'postgres'; Schema = 'sma_comment';    EnvPrefix = 'COMMENT' },
@@ -30,7 +30,7 @@ $script:ServiceDefinitions = @(
     [pscustomobject]@{ Name = 'feed-service';        Port = 8094; Module = 'services\feed-service';           Stage = 30; Store = '' },
     [pscustomobject]@{ Name = 'moderation-service';  Port = 8095; Module = 'services\moderation-service';     Stage = 30; Store = 'postgres'; Schema = 'sma_moderation'; EnvPrefix = 'MODERATION' },
     [pscustomobject]@{ Name = 'search-service';      Port = 8096; Module = 'services\search-service';         Stage = 30; Store = '' },
-    [pscustomobject]@{ Name = 'api-gateway';         Port = 8080; Module = 'infra\api-gateway';               Stage = 40; Store = '' }
+    [pscustomobject]@{ Name = 'api-gateway';         Port = 8080; Module = 'infra\api-gateway';               Stage = 25; Store = '' }
 )
 
 function Initialize-RuntimeDirectories {

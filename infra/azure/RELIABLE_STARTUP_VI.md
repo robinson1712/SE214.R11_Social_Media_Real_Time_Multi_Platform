@@ -3,12 +3,14 @@
 ## Hành vi sau khi áp dụng
 
 1. GitHub kiểm thử, build Java 17 và đóng gói 19 JAR executable vào release private trên Azure Blob.
-2. Khi VM bật, `doan-start` chạy bản đã cài: Kafka → Eureka → Config Server → các service nghiệp vụ → Gateway. Mỗi service phải qua health-check trước bước tiếp theo.
+2. Khi VM bật, `doan-start` chạy bản đã cài: Kafka → Eureka → Config Server → Auth → User → Gateway, rồi các service nghiệp vụ còn lại. Mỗi service phải qua health-check trước bước tiếp theo. Lỗi service phụ được ghi `BACKEND_DEGRADED`, tiếp tục thử các service phụ khác; Auth/Gateway đã hoạt động vẫn được giữ chạy. `BACKEND_READY` chỉ được ghi khi tất cả thành công.
 3. Khởi động thành công được ghi `BACKEND_READY` vào journal của `doan-start`. Sau đó timer mới chạy updater; việc lấy bản mới không chặn boot bản hiện có.
 4. Updater tải JAR, kiểm checksum, chuẩn bị cấu hình/database, chuyển bản và rollback nếu có lỗi. VM không gọi Maven để build release mới.
 5. Service lỗi được retry sau 60 giây, tối đa 3 lần start trong cửa sổ 15 phút; health-check có ngân sách 300 giây. Các lỗi cần xử lý sẽ xuất hiện rõ trong systemd/journal.
 
-VM `Running` là trạng thái máy, chưa phải trạng thái backend. Cần chờ native startup hoàn tất; thời gian thực tế sẽ được đo trong lần cold boot nghiệm thu. Database/Redis/MongoDB phải truy cập được. Giữ VM deallocated khi không dùng theo yêu cầu tiết kiệm credit.
+VM `Running` là trạng thái máy, chưa phải trạng thái backend. Cần chờ native startup hoàn tất; thời gian thực tế sẽ được đo trong lần cold boot nghiệm thu. Database/MongoDB phải truy cập được. Chủ VM đã chọn Redis nội bộ khi hostname Redis Aiven cũ không phân giải được DNS: Redis bind `127.0.0.1:6379`, AUTH, AOF và `noeviction`, giới hạn bộ nhớ 512 MB. PostgreSQL/MongoDB giữ nguyên; dữ liệu Redis cũ không được chuyển. Giữ VM deallocated khi không dùng theo yêu cầu tiết kiệm credit.
+
+Mật khẩu Redis native được sinh trên VM và lưu tại `/opt/doan/env/native-redis.env` (0600), không in ra log/commit. Drop-in cho các service nạp file này sau environment của release; unit mới cũng nạp override nếu có. Updater không ghi đè file native. Redis do systemd tự khởi động, service ứng dụng có dependency vào Redis. Chạy lại cấu hình native giữ nguyên mật khẩu; bootstrap từ chối tự nhận một Redis đã cài mà chưa được đánh dấu là instance của dự án.
 
 ## Cài một lần trên VM hiện có
 
@@ -25,10 +27,10 @@ trap 'rm -f -- "$bootstrap"' EXIT
 curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
   "https://raw.githubusercontent.com/robinson1712/SE214.R11_Social_Media_Real_Time_Multi_Platform/$revision/infra/azure/apply-startup-fix.sh" \
   --output "$bootstrap"
-bash "$bootstrap" "$revision"
+bash "$bootstrap" "$revision" --native-redis
 ```
 
-Script tải đúng bốn file từ cùng commit, dùng lại storage account trong cấu hình VM, cài updater và boot script, sửa ordering, áp dụng policy cho các unit hiện có và gỡ đúng override tạm `99-se214-recovery.conf`. Nó giữ chung khóa với boot/deploy và từ chối cài nếu đang boot hoặc deploy; không ngắt updater đang chạy. Nó không đổi VM size, NSG, credentials hoặc resource Azure, và không bật/tắt VM. Lần cài đặt này khởi động lại trình điều phối để khởi động các service còn thiếu.
+Script tải đúng sáu file từ cùng commit khi chọn native Redis, dùng lại storage account trong cấu hình VM, cài Redis qua kho Ubuntu, updater và boot script, sửa ordering, áp dụng policy cho các unit hiện có và gỡ đúng override tạm `99-se214-recovery.conf`. Nó giữ chung khóa với boot/deploy và từ chối cài nếu đang boot hoặc deploy; không ngắt updater đang chạy. Nó không đổi VM size, NSG, credential database hoặc resource Azure, và không bật/tắt VM. Lần cài đặt này khởi động lại trình điều phối để khởi động các service còn thiếu. VM đã có native Redis chỉ cần chạy lại bootstrap không có `--native-redis` khi cập nhật boot policy.
 
 Repository hiện tải được raw source công khai qua HTTPS. Nếu đổi repo sang private, dùng kênh chuyển file đã được xác thực thay vì đưa token vào lệnh/chụp màn hình.
 
@@ -56,4 +58,4 @@ journalctl -u doan-auto-update -n 15 --no-pager -o cat
 
 Binary updater giữ cơ chế rollback unit/Caddy khi promotion thất bại. Nếu một service bị rate-limit, đọc lỗi gốc trước; sau khi sửa dependency/config dùng `systemctl reset-failed doan-<service>` và khởi động lại `doan-start`. Source-only release sẽ bị updater mới từ chối trước khi dừng backend đang chạy; phát hành commit mới có JAR thay vì xóa trạng thái failed revision để ép compile.
 
-Kiểm tra cục bộ: 18 test hạ tầng qua; build và kiểm định dạng đóng gói đủ 19 JAR, application bytecode Java 17; Bash syntax và PowerShell parser qua; finding quan trọng của review đã xử lý. Các kiểm tra này không xác nhận trạng thái production. Chỉ xác nhận vận hành thật sau khi có kết quả nghiệm thu từ VM và Worker.
+Kiểm tra cục bộ được chạy trong suite `infra/azure/tests`: binary packaging, rollback, core-first/degraded boot, legacy installer, bootstrap ghim revision và native Redis idempotence/secret handling. Build và kiểm định dạng đóng gói đủ 19 JAR, application bytecode Java 17; Bash syntax và PowerShell parser được kiểm tra riêng. Các kiểm tra cục bộ không xác nhận trạng thái production. Chỉ xác nhận vận hành thật sau khi có kết quả nghiệm thu từ VM và Worker.

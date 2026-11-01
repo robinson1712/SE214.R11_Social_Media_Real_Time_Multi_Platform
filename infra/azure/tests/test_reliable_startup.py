@@ -111,7 +111,9 @@ done
 [[ "$url" == "https://raw.githubusercontent.com/robinson1712/SE214.R11_Social_Media_Real_Time_Multi_Platform/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"* ]] || exit 10
 printf '%s\\n' "$url" >> "$DOWNLOAD_LOG"
 if [[ "$url" == */install-auto-update.sh ]]; then
-  printf '#!/usr/bin/env bash\\nprintf "%%s" "$1" > "$RECEIPT"\\n' > "$output"
+  printf '#!/usr/bin/env bash\\nprintf "%%s" "$1" > "$RECEIPT"\\nprintf "boot " >> "$ORDER_LOG"\\n' > "$output"
+elif [[ "$url" == */install-native-redis.sh ]]; then
+  printf '#!/usr/bin/env bash\\nprintf "redis " >> "$ORDER_LOG"\\n' > "$output"
 else
   printf 'fixture file' > "$output"
 fi
@@ -127,7 +129,7 @@ fi
             script = script.replace('/opt/doan/deploy-agent/config.json', './config.json')
             (root / 'bootstrap.sh').write_text(script, newline='\n')
             env = dict(os.environ, PATH=str(root / 'bin') + os.pathsep + os.environ['PATH'],
-                       DOWNLOAD_LOG='./downloads.log', RECEIPT='./receipt')
+                       DOWNLOAD_LOG='./downloads.log', RECEIPT='./receipt', ORDER_LOG='./order.log')
             invalid = subprocess.run([BASH, 'bootstrap.sh', 'main'], cwd=root, env=env, capture_output=True, text=True)
             self.assertNotEqual(invalid.returncode, 0)
             self.assertFalse((root / 'downloads.log').exists())
@@ -135,6 +137,11 @@ fi
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual((root / 'receipt').read_text(), 'fixturestorage')
             self.assertEqual(len((root / 'downloads.log').read_text().splitlines()), 4)
+            self.assertEqual((root / 'order.log').read_text(), 'boot ')
+            native = subprocess.run([BASH, 'bootstrap.sh', 'a' * 40, '--native-redis'], cwd=root, env=env, capture_output=True, text=True)
+            self.assertEqual(native.returncode, 0, native.stdout + native.stderr)
+            self.assertEqual(len((root / 'downloads.log').read_text().splitlines()), 10)
+            self.assertEqual((root / 'order.log').read_text(), 'boot redis boot ')
 
     def test_installer_orders_updates_after_boot_and_removes_incident_override(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -143,6 +150,9 @@ fi
             for executable in ['apt-get', 'systemctl', 'flock']:
                 command = root / 'bin' / executable
                 command.write_text('#!/usr/bin/env bash\n'
+                                   'printf "%s %s\\n" "$(basename "$0")" "$*" >> "$COMMAND_LOG"\n'
+                                   'if [[ "$1" == reset-failed ]]; then exit 1; fi\n'
+                                   'if [[ "$*" == "restart doan-start.service" && "${FAIL_BOOT:-}" == yes ]]; then exit 1; fi\n'
                                    'if [[ "$1" == show ]]; then\n'
                                    '  if [[ "$2" == doan-start.service ]]; then echo "${BOOT_STATE:-inactive}"; else echo inactive; fi\n'
                                    'fi\nexit 0\n', newline='\n')
@@ -166,7 +176,7 @@ fi
             script = script.replace('/var/lib/doan-deploy', './state').replace('/var/log/doan-deploy', './logs')
             target = root / 'infra/azure/install-auto-update.sh'
             target.write_text(script, newline='\n')
-            env = dict(os.environ, PATH=str(root / 'bin') + os.pathsep + os.environ['PATH'])
+            env = dict(os.environ, PATH=str(root / 'bin') + os.pathsep + os.environ['PATH'], COMMAND_LOG='./commands.log')
             blocked = subprocess.run([BASH, 'infra/azure/install-auto-update.sh', 'fixturestorage'], cwd=root,
                                      env=dict(env, BOOT_STATE='activating'), capture_output=True, text=True)
             self.assertNotEqual(blocked.returncode, 0, 'Installer must not overwrite a legacy boot script while it runs')
@@ -184,13 +194,18 @@ fi
             self.assertFalse(override.exists())
             self.assertTrue((root / 'runtime/bin/start.sh').is_file())
             self.assertTrue((root / 'units/doan-api-gateway.service.d/startup-policy.conf').is_file())
+            (root / 'commands.log').write_text('')
+            degraded = subprocess.run([BASH, 'infra/azure/install-auto-update.sh', 'fixturestorage'], cwd=root,
+                                      env=dict(env, FAIL_BOOT='yes'), capture_output=True, text=True)
+            self.assertNotEqual(degraded.returncode, 0)
+            self.assertIn('systemctl start doan-auto-update.timer', (root / 'commands.log').read_text())
 
     def run_boot(self, fail=None):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             bin_dir = root / 'bin'
             bin_dir.mkdir()
-            (root / 'services.tsv').write_text('eureka-server\t8761\nconfig-server\t8888\nauth-service\t8081\napi-gateway\t18080\n', newline='\n')
+            (root / 'services.tsv').write_text('eureka-server\t8761\nconfig-server\t8888\nchat-service\t8092\ncomment-service\t8085\nauth-service\t8081\nuser-service\t8082\napi-gateway\t18080\n', newline='\n')
             log = root / 'commands.log'
             systemctl = bin_dir / 'systemctl'
             systemctl.write_text('#!/usr/bin/env bash\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n'
@@ -213,12 +228,13 @@ fi
             self.assertTrue(log.exists(), result.stdout + result.stderr)
             return result, log.read_text().splitlines(), 'BACKEND_READY' in result.stdout
 
-    def test_successful_boot_starts_gateway_last_then_records_readiness(self):
+    def test_successful_boot_starts_core_before_optional_services(self):
         result, commands, ready = self.run_boot()
         self.assertEqual(result.returncode, 0, result.stderr)
         starts = [line for line in commands if line.startswith('start doan-') and line != 'start doan-alloy']
         self.assertEqual(starts, ['start doan-kafka', 'start doan-eureka-server', 'start doan-config-server',
-                                  'start doan-auth-service', 'start doan-api-gateway'])
+                                  'start doan-auth-service', 'start doan-user-service', 'start doan-api-gateway',
+                                  'start doan-chat-service', 'start doan-comment-service'])
         self.assertTrue(ready, 'Boot must expose an explicit readiness marker')
 
     def test_dependency_failure_stops_boot_before_auth_and_gateway(self):
@@ -226,6 +242,14 @@ fi
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn('start doan-auth-service', commands)
         self.assertNotIn('start doan-api-gateway', commands)
+        self.assertFalse(ready)
+
+    def test_chat_failure_preserves_core_and_still_starts_other_optional_services(self):
+        result, commands, ready = self.run_boot('chat-service')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('start doan-api-gateway', commands)
+        self.assertIn('start doan-comment-service', commands)
+        self.assertIn('CORE_READY', result.stdout)
         self.assertFalse(ready)
 
 
