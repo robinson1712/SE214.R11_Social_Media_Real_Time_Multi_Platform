@@ -165,6 +165,9 @@ fi
             (root / 'runtime/config').mkdir()
             (root / 'runtime/config/services.tsv').write_text('api-gateway\t18080\n', newline='\n')
             (root / 'units').mkdir()
+            retry = root / 'units/doan-start.service.d/retry.conf'
+            retry.parent.mkdir(parents=True)
+            retry.write_text('[Service]\nRestart=on-failure\nRestartSec=30\n')
             override = root / 'run-units/doan-api-gateway.service.d/99-se214-recovery.conf'
             override.parent.mkdir(parents=True)
             override.write_text('[Service]\nRestart=no\n')
@@ -191,6 +194,8 @@ fi
             boot.read(root / 'units/doan-start.service.d/auto-update.conf')
             self.assertNotIn('doan-auto-update.service', boot.get('Unit', 'After', fallback='').split())
             self.assertNotIn('doan-auto-update.service', boot.get('Unit', 'Wants', fallback='').split())
+            boot.read(sorted((root / 'units/doan-start.service.d').glob('*.conf')))
+            self.assertEqual(boot['Service']['RestartSec'], '60', 'Legacy retry.conf must not override the installed boot retry policy')
             self.assertFalse(override.exists())
             self.assertTrue((root / 'runtime/bin/start.sh').is_file())
             self.assertTrue((root / 'units/doan-api-gateway.service.d/startup-policy.conf').is_file())

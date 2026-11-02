@@ -71,6 +71,12 @@ ExecStart=
 ExecStart=/usr/bin/flock /run/doan-deploy.lock /opt/doan/bin/start.sh
 RestartSec=60
 EOF
+# Existing VMs have a later-sorted retry.conf from the original boot installer.
+cat > /etc/systemd/system/doan-start.service.d/retry.conf <<'EOF'
+[Service]
+Restart=on-failure
+RestartSec=60
+EOF
 # Apply the same bounded recovery policy to already-installed JARs.
 units=()
 while read -r name port; do
