@@ -107,7 +107,7 @@ def discover(root, cloud, pages_origin):
         if name == "media-service":
             for suffix in ("S3_ENDPOINT", "PUBLIC_ENDPOINT", "ACCESS_KEY", "SECRET_KEY", "REGION", "BUCKET"):
                 env["CLOUD_STORAGE_" + suffix] = required(cloud, "STORAGE_" + suffix)
-        stage = extra.get("stage", {"eureka-server": 10, "config-server": 20, "api-gateway": 40}.get(name, 30))
+        stage = extra.get("stage", {"eureka-server": 10, "config-server": 20, "auth-service": 22, "user-service": 23, "api-gateway": 25}.get(name, 30))
         if not isinstance(stage, int):
             raise ValueError(f"Invalid startup stage: {name}")
         services.append({"name": name, "module": module, "port": port, "stage": stage, "schema": schema, "env": env})

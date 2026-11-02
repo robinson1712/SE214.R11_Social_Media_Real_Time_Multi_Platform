@@ -87,6 +87,7 @@ User=doan
 Group=doan
 WorkingDirectory=/opt/doan
 EnvironmentFile={release}/env/{name}.env
+EnvironmentFile=-/opt/doan/env/native-redis.env
 ExecStart=/usr/bin/java $JAVA_OPTS -jar {release}/apps/{name}.jar
 ExecStartPost=/opt/doan/deploy-agent/wait-health.sh {port} 300
 Restart=on-failure
